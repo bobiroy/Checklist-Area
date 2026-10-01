@@ -1,0 +1,7 @@
+{
+  "name": "Sistem Manajemen Genba Factory Improvement",
+  "description": "Aplikasi pengelolaan hasil improvement dan inspeksi Genba pabrik dengan real-time dashboard, bagan struktur organisasi manajemen, tabel Leadership Walkthrough, dan rekapitulasi data mingguan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
