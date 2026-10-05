@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Subtle drop shadow for crisp visibility on any browser tab theme -->
+    <filter id="tab-glow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.10)"/>
+    </filter>
+  </defs>
+  
+  <!-- Crisp white rounded tile background -->
+  <rect width="512" height="512" rx="100" fill="#FFFFFF" filter="url(#tab-glow)"/>
+  <rect width="510" height="510" x="1" y="1" rx="99" fill="none" stroke="#E2E8F0" stroke-width="2"/>
+  
+  <!-- Centered AOI Logo -->
+  <g transform="translate(36, 142) scale(0.44)">
+    <!-- Red Arrowhead (Corporate Red #E53935) -->
+    <path d="M 192,320 L 278,485 L 192,434 L 106,485 Z" fill="#E53935"/>
+    
+    <!-- Letter A: Solid black diagonal with apex and inner counter -->
+    <path d="M 282,90 L 230,485 L 340,485 L 315,330 L 298,190 Z" fill="#000000"/>
+    
+    <!-- Letter O: High-contrast Bodoni/Didone capital O -->
+    <path d="M 510,90 C 405,90 325,178 325,287 C 325,396 405,485 510,485 C 615,485 695,396 695,287 C 695,178 615,90 510,90 Z M 510,132 C 555,132 578,195 578,287 C 578,379 555,442 510,442 C 465,442 442,379 442,287 C 442,195 465,132 510,132 Z" fill="#000000" fill-rule="evenodd"/>
+    
+    <!-- Letter I: Didone Roman capital I -->
+    <path d="M 672,90 L 875,90 L 875,108 C 840,108 825,122 825,160 L 825,415 C 825,453 840,467 875,467 L 875,485 L 672,485 L 672,467 C 707,467 722,453 722,415 L 722,160 C 722,122 707,108 672,108 Z" fill="#000000"/>
+  </g>
+</svg>
