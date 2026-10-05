@@ -85,11 +85,11 @@ export default function App() {
     }, 3500);
   };
 
-  // Add / Edit submission: Seluruh temuan otomatis masuk ke BI Genba ('bi-weekly')
+  // Add / Edit submission: Seluruh temuan otomatis masuk ke BI Genba ('bi-monthly')
   const handleSaveFinding = (finding: InspectionFinding) => {
     const findingWithBI: InspectionFinding = {
       ...finding,
-      hierarchyLevel: 'bi-weekly'
+      hierarchyLevel: 'bi-monthly'
     };
     setFindings((prev) => {
       const existsIndex = prev.findIndex((f) => f.id === findingWithBI.id);

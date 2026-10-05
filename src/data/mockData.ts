@@ -534,13 +534,13 @@ export const FINDING_CATEGORIES: FindingCategory[] = [
 
 export const GENBA_HIERARCHY_TIERS: GenbaHierarchyTier[] = [
   {
-    id: 'bi-weekly',
+    id: 'bi-monthly',
     levelNumber: 1,
-    name: 'BI WEEKLY',
+    name: 'BI MONTHLY',
     subtitle: 'Genba with Adidas',
-    description: 'Inspeksi tingkat tertinggi bersama perwakilan & auditor brand Adidas dua minggu sekali. Memastikan kepatuhan standar global kualitas garmen, etika ketenagakerjaan, keselamatan kerja (EHS), dan keberlanjutan proses produksi ekspor.',
-    frequency: 'Bi-Weekly (Setiap 2 Minggu Sekali)',
-    frequencyCode: 'Bi-Weekly',
+    description: 'Inspeksi tingkat tertinggi bersama perwakilan & auditor brand Adidas setiap dua bulan sekali (Bi-Monthly). Memastikan kepatuhan standar global kualitas garmen, etika ketenagakerjaan, keselamatan kerja (EHS), dan keberlanjutan proses produksi ekspor.',
+    frequency: 'Bi-Monthly (Setiap 2 Bulan Sekali)',
+    frequencyCode: 'Bi-Monthly',
     participants: 'Adidas Brand Representative, Country Quality Auditor, Plant General Manager, Head of QA, EHS Lead',
     leadRole: 'Plant General Manager & Adidas Brand Quality Lead',
     targetArea: 'Dedicated Adidas Sewing Lines, Final QC Gate, Packaging, Chemical Storage, Finished Goods Warehouse',
@@ -684,7 +684,7 @@ export const GENBA_HIERARCHY_TIERS: GenbaHierarchyTier[] = [
 export const INITIAL_WALKTHROUGH_SESSIONS: GenbaWalkthroughSession[] = [
   {
     id: 'SES-2026-0901',
-    hierarchyLevel: 'bi-weekly',
+    hierarchyLevel: 'bi-monthly',
     date: '2026-09-24',
     time: '09:00 - 12:30 WIB',
     shift: 'General Office',

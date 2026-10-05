@@ -56,7 +56,20 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
     const saved = localStorage.getItem('genba_hierarchy_tiers');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed: GenbaHierarchyTier[] = JSON.parse(saved);
+        return parsed.map(t => {
+          if (t.id === 'bi-weekly' || t.name === 'BI WEEKLY') {
+            return {
+              ...t,
+              id: 'bi-monthly' as GenbaHierarchyLevel,
+              name: 'BI MONTHLY',
+              frequency: 'Bi-Monthly (Setiap 2 Bulan Sekali)',
+              frequencyCode: 'Bi-Monthly' as const,
+              description: 'Inspeksi tingkat tertinggi bersama perwakilan & auditor brand Adidas setiap dua bulan sekali (Bi-Monthly). Memastikan kepatuhan standar global kualitas garmen, etika ketenagakerjaan, keselamatan kerja (EHS), dan keberlanjutan proses produksi ekspor.'
+            };
+          }
+          return t;
+        });
       } catch (e) {
         console.error('Failed to parse saved hierarchy tiers', e);
       }
@@ -65,14 +78,20 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
   });
 
   // Selected Pyramid Tier
-  const [selectedTierId, setSelectedTierId] = useState<GenbaHierarchyLevel>('bi-weekly');
+  const [selectedTierId, setSelectedTierId] = useState<GenbaHierarchyLevel>('bi-monthly');
 
   // Walkthrough Sessions State (with localStorage persistence)
   const [sessions, setSessions] = useState<GenbaWalkthroughSession[]>(() => {
     const saved = localStorage.getItem('genba_walkthrough_sessions');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed: GenbaWalkthroughSession[] = JSON.parse(saved);
+        return parsed.map(s => {
+          if (s.hierarchyLevel === 'bi-weekly') {
+            return { ...s, hierarchyLevel: 'bi-monthly' as GenbaHierarchyLevel };
+          }
+          return s;
+        });
       } catch (e) {
         console.error('Failed to parse saved walkthrough sessions', e);
       }
@@ -278,11 +297,11 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
                 {/* Left: 3D Stepped Pyramid Graphic */}
                 <div className="lg:col-span-6 flex flex-col items-center justify-center p-4">
                   <div className="w-full max-w-md space-y-2.5">
-                    {/* Tier 1: Apex - BI WEEKLY (Gold) */}
+                    {/* Tier 1: Apex - BI MONTHLY (Gold) */}
                     <div 
-                      onClick={() => setSelectedTierId('bi-weekly')}
+                      onClick={() => setSelectedTierId('bi-monthly')}
                       className={`relative cursor-pointer transition-all duration-300 transform group ${
-                        selectedTierId === 'bi-weekly'
+                        selectedTierId === 'bi-monthly' || selectedTierId === 'bi-weekly'
                           ? 'scale-105 z-40'
                           : 'hover:scale-102 opacity-90 hover:opacity-100 z-30'
                       }`}
@@ -293,12 +312,12 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
                           TIER 1 (APEX)
                         </span>
                         <h3 className="text-xs sm:text-sm font-black text-slate-950 tracking-wider">
-                          BI WEEKLY
+                          BI MONTHLY
                         </h3>
                         <p className="text-[10px] font-bold text-amber-950">
                           Genba with Adidas
                         </p>
-                        {selectedTierId === 'bi-weekly' && (
+                        {(selectedTierId === 'bi-monthly' || selectedTierId === 'bi-weekly') && (
                           <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-amber-950 animate-ping"></div>
                         )}
                       </div>
@@ -467,7 +486,7 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-200">
               <div className="flex items-start gap-4">
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border ${
-                  activeTier.id === 'bi-weekly' ? 'bg-amber-100 text-amber-800 border-amber-300' :
+                  activeTier.id === 'bi-monthly' || activeTier.id === 'bi-weekly' ? 'bg-amber-100 text-amber-800 border-amber-300' :
                   activeTier.id === 'bod-genba' ? 'bg-blue-100 text-blue-800 border-blue-300' :
                   activeTier.id === 'cross-check' ? 'bg-orange-100 text-orange-800 border-orange-300' :
                   'bg-teal-100 text-teal-800 border-teal-300'
@@ -707,7 +726,7 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
                   className="bg-transparent font-semibold text-slate-800 outline-none cursor-pointer"
                 >
                   <option value="all">Semua Level ({sessions.length})</option>
-                  <option value="bi-weekly">1. BI WEEKLY (Adidas)</option>
+                  <option value="bi-monthly">1. BI MONTHLY (Adidas)</option>
                   <option value="bod-genba">2. BoD GENBA</option>
                   <option value="cross-check">3. CROSS CHECK MANAGEMENT</option>
                   <option value="daily-genba">4. DAILY GENBA SHOPFLOOR</option>
@@ -740,9 +759,9 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {sessions
-                  .filter(s => sessionFilterLevel === 'all' || s.hierarchyLevel === sessionFilterLevel)
+                  .filter(s => sessionFilterLevel === 'all' || s.hierarchyLevel === sessionFilterLevel || (sessionFilterLevel === 'bi-monthly' && s.hierarchyLevel === 'bi-weekly'))
                   .map((session) => {
-                    const tier = hierarchyTiers.find(t => t.id === session.hierarchyLevel) || hierarchyTiers[0];
+                    const tier = hierarchyTiers.find(t => t.id === session.hierarchyLevel || (session.hierarchyLevel === 'bi-weekly' && t.id === 'bi-monthly')) || hierarchyTiers[0];
 
                     return (
                       <tr key={session.id} className="hover:bg-slate-50/70 transition-colors">
@@ -756,7 +775,7 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
 
                         <td className="py-3 px-3 whitespace-nowrap">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded border inline-flex items-center gap-1 ${
-                            session.hierarchyLevel === 'bi-weekly' ? 'bg-amber-50 text-amber-900 border-amber-300' :
+                            session.hierarchyLevel === 'bi-monthly' || session.hierarchyLevel === 'bi-weekly' ? 'bg-amber-50 text-amber-900 border-amber-300' :
                             session.hierarchyLevel === 'bod-genba' ? 'bg-blue-50 text-blue-900 border-blue-300' :
                             session.hierarchyLevel === 'cross-check' ? 'bg-orange-50 text-orange-900 border-orange-300' :
                             'bg-teal-50 text-teal-900 border-teal-300'

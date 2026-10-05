@@ -67,7 +67,7 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [attachmentAfterUrl, setAttachmentAfterUrl] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('Medium');
-  const [hierarchyLevel, setHierarchyLevel] = useState<GenbaHierarchyLevel>('bi-weekly');
+  const [hierarchyLevel, setHierarchyLevel] = useState<GenbaHierarchyLevel>('bi-monthly');
   const [impactScore, setImpactScore] = useState('');
   const [progressNotes, setProgressNotes] = useState('');
 
@@ -95,7 +95,7 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
         setAttachmentUrl(initialData.attachmentUrl || SAMPLE_PHOTO_PRESETS[1].url);
         setAttachmentAfterUrl(initialData.attachmentAfterUrl || '');
         setPriority(initialData.priority || 'Medium');
-        setHierarchyLevel(initialData.hierarchyLevel || 'bi-weekly');
+        setHierarchyLevel(initialData.hierarchyLevel === 'bi-weekly' ? 'bi-monthly' : (initialData.hierarchyLevel || 'bi-monthly'));
         setImpactScore(initialData.impactScore || '');
         setProgressNotes(initialData.progressNotes || initialData.notes || '');
         setActiveSubTab('progress'); // Default to progress & after photo when editing
@@ -117,7 +117,7 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
         setAttachmentUrl(SAMPLE_PHOTO_PRESETS[1].url);
         setAttachmentAfterUrl('');
         setPriority('Medium');
-        setHierarchyLevel('bi-weekly');
+        setHierarchyLevel('bi-monthly');
         setImpactScore('');
         setProgressNotes('');
         setActiveSubTab('details');

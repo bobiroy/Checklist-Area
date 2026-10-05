@@ -10,7 +10,8 @@ export type FindingStatus = 'Open' | 'In Progress' | 'Closed' | 'Pending Verific
 export type PriorityLevel = 'Low' | 'Medium' | 'High' | 'Critical';
 
 export type GenbaHierarchyLevel = 
-  | 'bi-weekly'    // BI WEEKLY - Genba with Adidas
+  | 'bi-monthly'   // BI MONTHLY - Genba with Adidas
+  | 'bi-weekly'    // Legacy fallback compatibility
   | 'bod-genba'    // BoD GENBA - Genba with Board Of Directors
   | 'cross-check'  // CROSS CHECK GENBA MANAGEMENT - Monthly Genba internal Operation Excellence
   | 'daily-genba'; // DAILY GENBA (SHOPFLOOR MANAGEMENT) - GL & Supervisor Genba everyday on site
@@ -18,11 +19,11 @@ export type GenbaHierarchyLevel =
 export interface GenbaHierarchyTier {
   id: GenbaHierarchyLevel;
   levelNumber: number; // 1 (Apex), 2, 3, 4 (Base)
-  name: string; // e.g., "BI WEEKLY", "BoD GENBA"
+  name: string; // e.g., "BI MONTHLY", "BoD GENBA"
   subtitle: string; // e.g., "Genba with Adidas", "Genba with Board Of Directors"
   description: string;
   frequency: string;
-  frequencyCode: 'Bi-Weekly' | 'Monthly' | 'Monthly Internal' | 'Daily';
+  frequencyCode: 'Bi-Monthly' | 'Bi-Weekly' | 'Monthly' | 'Monthly Internal' | 'Daily';
   participants: string;
   leadRole: string;
   targetArea: string;
