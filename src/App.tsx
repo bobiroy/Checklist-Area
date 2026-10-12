@@ -2,16 +2,19 @@ import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { DashboardView } from './components/DashboardView';
 import { InspectionTableView } from './components/InspectionTableView';
-import { WeeklyLogsView } from './components/WeeklyLogsView';
 import { ManagementStructureView } from './components/ManagementStructureView';
+import { FactoryDashboardView } from './components/FactoryDashboardView';
 import { FindingFormModal } from './components/FindingFormModal';
 import { PhotoProofModal } from './components/PhotoProofModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
-import { ActiveTab, InspectionFinding, FindingStatus, FindingCategory } from './types';
-import { INITIAL_FINDINGS } from './data/mockData';
+import { LoginModal } from './components/LoginModal';
+import { LoginScreen } from './components/LoginScreen';
+import { ActiveTab, InspectionFinding, FindingStatus, FindingCategory, FactoryOption, UserAccount } from './types';
+import { INITIAL_FINDINGS, SYSTEM_ACCOUNTS } from './data/mockData';
 import { CheckCircle2 } from 'lucide-react';
 
 const STORAGE_KEY = 'factory_genba_findings_v1';
+const USER_STORAGE_KEY = 'factory_genba_user_session_v1';
 
 const normalizeCategory = (cat: string): FindingCategory => {
   if (cat === '5R' || cat === '5S & Housekeeping') return '5R';
@@ -46,7 +49,13 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((item: InspectionFinding) => ({
+          // Hanya temuan 1 sampai 3 yang tersisa dari data sample bawaan
+          const legacyIdsToRemove = [
+            'FND-2026-004', 'FND-2026-005', 'FND-2026-006', 'FND-2026-007',
+            'FND-2026-008', 'FND-2026-009', 'FND-2026-010'
+          ];
+          const filtered = parsed.filter((item: InspectionFinding) => !legacyIdsToRemove.includes(item.id));
+          return filtered.map((item: InspectionFinding) => ({
             ...item,
             category: normalizeCategory(item.category),
             department: normalizeDepartment(item.department)
@@ -59,16 +68,36 @@ export default function App() {
     return INITIAL_FINDINGS;
   });
 
+  // User Authentication & Role State (Admin vs Anggota)
+  // LAYER 1: First layer requires username & password before accessing web
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => {
+    try {
+      const saved = localStorage.getItem(USER_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.role && parsed.username) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    // Default to null: User must log in first
+    return null;
+  });
+
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [loginRestrictReason, setLoginRestrictReason] = useState<string | null>(null);
+
   // Modals state
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingFinding, setEditingFinding] = useState<InspectionFinding | null>(null);
+  const [defaultFactoryForModal, setDefaultFactoryForModal] = useState<FactoryOption | undefined>('AOI 1');
   const [photoProofFinding, setPhotoProofFinding] = useState<InspectionFinding | null>(null);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
   // Toast notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Save to localStorage
+  // Save findings to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(findings));
@@ -85,8 +114,41 @@ export default function App() {
     }, 3500);
   };
 
+  // Auth Handlers
+  const handleLogin = (account: UserAccount) => {
+    setCurrentUser(account);
+    try {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(account));
+    } catch {
+      // ignore
+    }
+    showToast(`Berhasil masuk sebagai ${account.role === 'admin' ? 'ADMIN' : 'ANGGOTA'}: ${account.name}`);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    showToast('Anda telah logout dari sistem. Silakan masukkan username dan password untuk masuk kembali.');
+  };
+
+  const handleOpenLoginWithReason = (reason?: string) => {
+    setLoginRestrictReason(reason || null);
+    setIsLoginModalOpen(true);
+  };
+
   // Add / Edit submission: Seluruh temuan otomatis masuk ke BI Genba ('bi-monthly')
   const handleSaveFinding = (finding: InspectionFinding) => {
+    // Role check: Only admin can save finding with status Closed
+    if (finding.status === 'Closed' && currentUser?.role !== 'admin') {
+      showToast('⚠️ Akses Ditolak: Hanya Admin yang dapat membuat temuan Close.');
+      handleOpenLoginWithReason('Hanya akun Admin yang berwenang menetapkan status Closed.');
+      return;
+    }
+
     const findingWithBI: InspectionFinding = {
       ...finding,
       hierarchyLevel: 'bi-monthly'
@@ -114,6 +176,13 @@ export default function App() {
 
   // Quick inline status update
   const handleQuickUpdateStatus = (id: string, newStatus: FindingStatus) => {
+    // Strict Guard: Hanya Admin yang dapat membuat temuan status Closed
+    if (newStatus === 'Closed' && currentUser?.role !== 'admin') {
+      showToast('⚠️ Akses Ditolak: Hanya Admin yang dapat membuat temuan Close.');
+      handleOpenLoginWithReason('Hanya Admin yang berwenang menutup temuan (Status Closed). Akun Anda saat ini adalah Anggota.');
+      return;
+    }
+
     setFindings((prev) =>
       prev.map((item) => {
         if (item.id === id) {
@@ -140,6 +209,25 @@ export default function App() {
     showToast('Data temuan berhasil di-reset ke data bawaan.');
   };
 
+  // FIRST LAYER SECURITY GATEKEEPER
+  // User MUST input username & password and confirm identity before web is accessible
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col">
+        <LoginScreen onLoginSuccess={handleLogin} />
+        {toastMessage && (
+          <div 
+            id="app-toast-alert"
+            className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold animate-in slide-in-from-bottom-2 fade-in"
+          >
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
       {/* Top Main Navigation Header */}
@@ -151,6 +239,9 @@ export default function App() {
           setIsFormModalOpen(true);
         }}
         findings={findings}
+        currentUser={currentUser}
+        onOpenLoginModal={() => handleOpenLoginWithReason()}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
@@ -160,6 +251,7 @@ export default function App() {
             findings={findings}
             onNavigateTab={setActiveTab}
             onOpenFindingModal={() => {
+              setDefaultFactoryForModal('AOI 1');
               setEditingFinding(null);
               setIsFormModalOpen(true);
             }}
@@ -168,6 +260,25 @@ export default function App() {
               setEditingFinding(finding);
               setIsFormModalOpen(true);
             }}
+          />
+        )}
+
+        {activeTab === 'factory-dashboard' && (
+          <FactoryDashboardView
+            findings={findings}
+            onOpenFindingModal={(defaultFac) => {
+              setDefaultFactoryForModal(defaultFac || 'AOI 1');
+              setEditingFinding(null);
+              setIsFormModalOpen(true);
+            }}
+            onSelectPhotoProof={(finding) => setPhotoProofFinding(finding)}
+            onEditFinding={(finding) => {
+              setEditingFinding(finding);
+              setIsFormModalOpen(true);
+            }}
+            onQuickUpdateStatus={handleQuickUpdateStatus}
+            currentUser={currentUser}
+            onOpenLoginModal={handleOpenLoginWithReason}
           />
         )}
 
@@ -185,22 +296,24 @@ export default function App() {
             onDeleteFinding={handleDeleteFinding}
             onSelectPhotoProof={(finding) => setPhotoProofFinding(finding)}
             onQuickUpdateStatus={handleQuickUpdateStatus}
-          />
-        )}
-
-        {activeTab === 'weekly-logs' && (
-          <WeeklyLogsView
-            findings={findings}
-            onSelectPhotoProof={(finding) => setPhotoProofFinding(finding)}
-            onEditFinding={(finding) => {
-              setEditingFinding(finding);
-              setIsFormModalOpen(true);
-            }}
+            currentUser={currentUser}
+            onOpenLoginModal={handleOpenLoginWithReason}
           />
         )}
 
         {activeTab === 'management-structure' && (
-          <ManagementStructureView findings={findings} />
+          <ManagementStructureView 
+            findings={findings}
+            onOpenNewFindingModal={() => {
+              setEditingFinding(null);
+              setIsFormModalOpen(true);
+            }}
+            onEditFinding={(finding) => {
+              setEditingFinding(finding);
+              setIsFormModalOpen(true);
+            }}
+            onSelectPhotoProof={(finding) => setPhotoProofFinding(finding)}
+          />
         )}
       </main>
 
@@ -235,6 +348,9 @@ export default function App() {
         }}
         onSubmit={handleSaveFinding}
         initialData={editingFinding}
+        defaultFactory={defaultFactoryForModal}
+        currentUser={currentUser}
+        onRequireAdmin={handleOpenLoginWithReason}
       />
 
       {/* Modal: Photo Proof Comparator / Viewer */}
@@ -246,6 +362,19 @@ export default function App() {
           setEditingFinding(finding);
           setIsFormModalOpen(true);
         }}
+      />
+
+      {/* Modal: Menu Log In (Username & Password: Admin vs Anggota) */}
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => {
+          setIsLoginModalOpen(false);
+          setLoginRestrictReason(null);
+        }}
+        currentUser={currentUser}
+        onLogin={handleLogin}
+        onLogout={handleLogout}
+        restrictReason={loginRestrictReason}
       />
 
       {/* Modal: Reset Confirmation */}

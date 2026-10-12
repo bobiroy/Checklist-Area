@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, MapPin, User, Users, Target, FileText, CheckCircle2 } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, User, Users, Target, FileText, CheckCircle2, Lock, AlertCircle } from 'lucide-react';
 import { GenbaHierarchyLevel, GenbaWalkthroughSession } from '../types';
 import { GENBA_HIERARCHY_TIERS, FACTORY_AREAS } from '../data/mockData';
 
@@ -14,9 +14,9 @@ export const WalkthroughSessionModal: React.FC<WalkthroughSessionModalProps> = (
   isOpen,
   onClose,
   onSubmit,
-  initialLevel = 'daily-genba'
+  initialLevel = 'bi-monthly'
 }) => {
-  const [level, setLevel] = useState<GenbaHierarchyLevel>(initialLevel);
+  const [level, setLevel] = useState<GenbaHierarchyLevel>('bi-monthly');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState<string>('09:00 - 10:30 WIB');
   const [shift, setShift] = useState<string>('Shift 1');
@@ -29,16 +29,19 @@ export const WalkthroughSessionModal: React.FC<WalkthroughSessionModalProps> = (
 
   if (!isOpen) return null;
 
-  // Selected tier data for auto-populating defaults
-  const activeTier = GENBA_HIERARCHY_TIERS.find(t => t.id === level) || GENBA_HIERARCHY_TIERS[0];
+  // Selected tier data for auto-populating defaults (always BI Monthly)
+  const activeTier = GENBA_HIERARCHY_TIERS.find(t => t.id === 'bi-monthly' || t.id === 'bi-weekly') || GENBA_HIERARCHY_TIERS[0];
 
   const handleLevelChange = (newLevel: GenbaHierarchyLevel) => {
-    setLevel(newLevel);
-    const tier = GENBA_HIERARCHY_TIERS.find(t => t.id === newLevel);
-    if (tier) {
-      setLeader(tier.picLeader);
-      setParticipants(tier.participants);
-      setFocusTheme(`Fokus ${tier.name}: ${tier.subtitle}`);
+    // Only allow BI Monthly
+    if (newLevel === 'bi-monthly' || newLevel === 'bi-weekly') {
+      setLevel('bi-monthly');
+      const tier = activeTier;
+      if (tier) {
+        setLeader(tier.picLeader);
+        setParticipants(tier.participants);
+        setFocusTheme(`Fokus ${tier.name}: ${tier.subtitle}`);
+      }
     }
   };
 
@@ -46,7 +49,7 @@ export const WalkthroughSessionModal: React.FC<WalkthroughSessionModalProps> = (
     e.preventDefault();
     const newSession: GenbaWalkthroughSession = {
       id: `SES-${Date.now().toString().slice(-4)}`,
-      hierarchyLevel: level,
+      hierarchyLevel: 'bi-monthly',
       date,
       time,
       shift,
@@ -72,10 +75,10 @@ export const WalkthroughSessionModal: React.FC<WalkthroughSessionModalProps> = (
             <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
             <div>
               <h2 className="text-base font-bold text-white">
-                Input Agenda Walkthrough Berdasarkan Hirarki
+                Input Agenda Walkthrough BI Monthly (Adidas)
               </h2>
               <p className="text-xs text-slate-300">
-                Pencatatan sesi Genba resmi sesuai tingkat piramida kepemimpinan pabrik
+                Pencatatan agenda resmi khusus tingkat BI Monthly (Satu-satunya level aktif input)
               </p>
             </div>
           </div>
@@ -89,38 +92,40 @@ export const WalkthroughSessionModal: React.FC<WalkthroughSessionModalProps> = (
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4 text-xs text-slate-700">
-          {/* Level Hirarki Selector (4 Tiers) */}
+          {/* Level Hirarki Selector: Khusus BI Monthly */}
           <div>
-            <label className="block font-bold text-slate-900 mb-2">
-              1. Pilih Level Hirarki Genba (Sesuai Diagram Piramida):
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {GENBA_HIERARCHY_TIERS.map((tier) => {
-                const isSelected = level === tier.id;
-                return (
-                  <button
-                    key={tier.id}
-                    type="button"
-                    onClick={() => handleLevelChange(tier.id)}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-2.5 ${
-                      isSelected
-                        ? 'border-amber-500 bg-amber-50/80 ring-2 ring-amber-400/20'
-                        : 'border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50'
-                    }`}
-                  >
-                    <span className="w-5 h-5 rounded-full bg-slate-900 text-amber-400 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                      {tier.levelNumber}
+            <div className="flex items-center justify-between mb-2">
+              <label className="block font-bold text-slate-900">
+                1. Level Hirarki Genba:
+              </label>
+              <span className="text-[11px] font-extrabold text-amber-900 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
+                Khusus BI MONTHLY (Adidas)
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl border border-amber-400 bg-amber-50/90 ring-2 ring-amber-400/20 shadow-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center shrink-0">
+                  1
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-black text-slate-950 text-xs">BI MONTHLY</p>
+                    <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-200 text-amber-950">
+                      SATU-SATUNYA LEVEL AKTIF
                     </span>
-                    <div className="min-w-0">
-                      <p className="font-bold text-slate-900 text-xs truncate">{tier.name}</p>
-                      <p className="text-[11px] text-slate-600 truncate">{tier.subtitle}</p>
-                      <span className="text-[10px] font-semibold text-amber-800 block mt-0.5">
-                        {tier.frequency}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
+                  </div>
+                  <p className="text-[11px] text-slate-700">Genba with Adidas &bull; Bi-Monthly (Setiap 2 Bulan Sekali)</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-amber-800 bg-amber-100/80 px-2 py-1 rounded border border-amber-200 hidden sm:inline-block">
+                Apex Tier
+              </span>
+            </div>
+
+            <div className="mt-2.5 p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-slate-600 flex items-center gap-2">
+              <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>Fitur penjadwalan pada BoD Genba, Cross Check, dan Daily Genba telah ditiadakan agar performa sistem tetap ringan dan cepat.</span>
             </div>
           </div>
 

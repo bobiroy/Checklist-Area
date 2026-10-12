@@ -15,7 +15,8 @@ import {
   Trash2,
   Award,
   Boxes,
-  Edit3
+  Edit3,
+  Building2
 } from 'lucide-react';
 import { InspectionFinding, ActiveTab, FindingCategory } from '../types';
 import { DepartmentAchievementChart } from './DepartmentAchievementChart';
@@ -156,16 +157,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               onClick={() => onNavigateTab('leadership-walkthrough')}
               className="px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700 text-white font-semibold rounded-xl text-xs sm:text-sm border border-slate-600 transition-all flex items-center gap-2 cursor-pointer"
             >
-              <span>Lihat Tabel Inspeksi ({total} Temuan)</span>
+              <span>Tabel Inspeksi ({total} Temuan)</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
-              id="hero-view-weekly-logs-btn"
-              onClick={() => onNavigateTab('weekly-logs')}
-              className="px-4 py-2.5 bg-slate-800/40 hover:bg-slate-700/60 text-slate-300 hover:text-white font-medium rounded-xl text-xs sm:text-sm border border-slate-700 transition-all flex items-center gap-2 cursor-pointer"
+              id="hero-view-factory-dashboard-btn"
+              onClick={() => onNavigateTab('factory-dashboard')}
+              className="px-4 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-white font-semibold rounded-xl text-xs sm:text-sm border border-amber-500/40 transition-all flex items-center gap-2 cursor-pointer"
             >
-              <Calendar className="w-4 h-4" />
-              <span>Rekap Mingguan</span>
+              <Building2 className="w-4 h-4 text-amber-400" />
+              <span>Factory Dashboard (AOI 1-3)</span>
+            </button>
+            <button
+              id="hero-view-management-structure-btn"
+              onClick={() => onNavigateTab('management-structure')}
+              className="px-4 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 hover:text-white font-medium rounded-xl text-xs sm:text-sm border border-purple-500/40 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Layers className="w-4 h-4 text-purple-400" />
+              <span>Agenda &amp; Temuan BI Monthly</span>
             </button>
           </div>
         </div>
@@ -378,7 +387,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     title="Klik untuk melihat bukti foto"
                   >
                     <p className="font-bold text-slate-900 truncate group-hover:text-amber-700 transition-colors">{item.finding}</p>
-                    <p className="text-[11px] text-slate-500 truncate">{item.area} &bull; PIC: {item.pic}</p>
+                    <p className="text-[11px] text-slate-500 truncate flex items-center gap-1.5 mt-0.5">
+                      <span className="font-black text-amber-950 bg-amber-100 border border-amber-300 px-1 py-0.2 rounded text-[9px] uppercase tracking-wider shrink-0">
+                        {item.factory || 'AOI 1'}
+                      </span>
+                      <span>{item.area} &bull; PIC: {item.pic}</span>
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800">

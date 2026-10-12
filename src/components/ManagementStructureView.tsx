@@ -1,12 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Network, 
   User, 
-  Phone, 
-  Mail, 
   CheckCircle2, 
-  ShieldCheck, 
-  Building, 
+  ShieldCheck,
   Users, 
   ChevronRight, 
   Target, 
@@ -23,18 +19,20 @@ import {
   MapPin,
   CheckCircle,
   AlertTriangle,
-  FileText
+  FileText,
+  Lock,
+  Info,
+  AlertCircle,
+  Camera,
+  ExternalLink
 } from 'lucide-react';
 import { 
-  DepartmentInfo, 
   InspectionFinding, 
   GenbaHierarchyTier, 
   GenbaHierarchyLevel, 
   GenbaWalkthroughSession 
 } from '../types';
 import { 
-  DEPARTMENTS, 
-  PLANT_MANAGER_PROFILE, 
   GENBA_HIERARCHY_TIERS, 
   INITIAL_WALKTHROUGH_SESSIONS 
 } from '../data/mockData';
@@ -43,13 +41,19 @@ import { EditHierarchyTierModal } from './EditHierarchyTierModal';
 
 interface ManagementStructureViewProps {
   findings: InspectionFinding[];
+  onOpenNewFindingModal?: () => void;
+  onEditFinding?: (finding: InspectionFinding) => void;
+  onSelectPhotoProof?: (finding: InspectionFinding) => void;
 }
 
 export const ManagementStructureView: React.FC<ManagementStructureViewProps> = ({
-  findings
+  findings,
+  onOpenNewFindingModal,
+  onEditFinding,
+  onSelectPhotoProof
 }) => {
   // Primary Navigation Tab within Management Structure
-  const [activeSection, setActiveSection] = useState<'hierarchy' | 'sessions' | 'departments'>('hierarchy');
+  const [activeSection, setActiveSection] = useState<'hierarchy' | 'sessions'>('hierarchy');
 
   // Hierarchy Tiers State (with localStorage persistence)
   const [hierarchyTiers, setHierarchyTiers] = useState<GenbaHierarchyTier[]>(() => {
@@ -58,14 +62,21 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
       try {
         const parsed: GenbaHierarchyTier[] = JSON.parse(saved);
         return parsed.map(t => {
-          if (t.id === 'bi-weekly' || t.name === 'BI WEEKLY') {
+          if (t.id === 'bi-monthly' || t.name === 'BI MONTHLY' || t.id === 'bi-weekly' || t.name === 'BI WEEKLY') {
+            const currentObjs = t.objectives || [];
             return {
               ...t,
               id: 'bi-monthly' as GenbaHierarchyLevel,
               name: 'BI MONTHLY',
               frequency: 'Bi-Monthly (Setiap 2 Bulan Sekali)',
               frequencyCode: 'Bi-Monthly' as const,
-              description: 'Inspeksi tingkat tertinggi bersama perwakilan & auditor brand Adidas setiap dua bulan sekali (Bi-Monthly). Memastikan kepatuhan standar global kualitas garmen, etika ketenagakerjaan, keselamatan kerja (EHS), dan keberlanjutan proses produksi ekspor.'
+              description: 'Inspeksi tingkat tertinggi bersama perwakilan & auditor brand Adidas setiap dua bulan sekali (Bi-Monthly). Memastikan kepatuhan standar global kualitas garmen, etika ketenagakerjaan, keselamatan kerja (EHS), dan keberlanjutan proses produksi ekspor.',
+              objectives: [
+                currentObjs[0] || GENBA_HIERARCHY_TIERS[0].objectives[0],
+                currentObjs[1] || GENBA_HIERARCHY_TIERS[0].objectives[1],
+                'Evaluasi temuan akan 5R dan Melakukan perbaikan atas hasil temuan dengan menelusuri latar belakang temuan dan cara penyelesaian',
+                'Review dan melanjutkan Continuous Improvement pada seluruh area'
+              ]
             };
           }
           return t;
@@ -80,18 +91,22 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
   // Selected Pyramid Tier
   const [selectedTierId, setSelectedTierId] = useState<GenbaHierarchyLevel>('bi-monthly');
 
-  // Walkthrough Sessions State (with localStorage persistence)
+  // Walkthrough Sessions State (with localStorage persistence - exclusively for BI Monthly)
   const [sessions, setSessions] = useState<GenbaWalkthroughSession[]>(() => {
     const saved = localStorage.getItem('genba_walkthrough_sessions');
     if (saved) {
       try {
         const parsed: GenbaWalkthroughSession[] = JSON.parse(saved);
-        return parsed.map(s => {
-          if (s.hierarchyLevel === 'bi-weekly') {
-            return { ...s, hierarchyLevel: 'bi-monthly' as GenbaHierarchyLevel };
-          }
-          return s;
-        });
+        // Exclusively keep BI Monthly sessions (remove any residual BoD, Cross Check, Daily sessions)
+        const biMonthlySessions = parsed
+          .filter(s => s.hierarchyLevel === 'bi-monthly' || s.hierarchyLevel === 'bi-weekly')
+          .map(s => ({
+            ...s,
+            hierarchyLevel: 'bi-monthly' as GenbaHierarchyLevel
+          }));
+        if (biMonthlySessions.length > 0) {
+          return biMonthlySessions;
+        }
       } catch (e) {
         console.error('Failed to parse saved walkthrough sessions', e);
       }
@@ -99,15 +114,12 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
     return INITIAL_WALKTHROUGH_SESSIONS;
   });
 
-  // Filter for sessions tab
-  const [sessionFilterLevel, setSessionFilterLevel] = useState<string>('all');
+  // Filter for sessions tab (filter by status)
+  const [sessionFilterStatus, setSessionFilterStatus] = useState<string>('all');
 
   // Modals state
   const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
   const [isEditTierModalOpen, setIsEditTierModalOpen] = useState(false);
-
-  // Selected Department State (for department org chart tab)
-  const [selectedDept, setSelectedDept] = useState<DepartmentInfo>(DEPARTMENTS[0]);
 
   // Persist tiers to localStorage
   useEffect(() => {
@@ -121,26 +133,13 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
 
   // Active selected tier object
   const activeTier = hierarchyTiers.find(t => t.id === selectedTierId) || hierarchyTiers[0];
+  const isBiMonthly = activeTier.id === 'bi-monthly' || activeTier.id === 'bi-weekly';
 
   // Sessions for current active tier
-  const tierSessions = sessions.filter(s => s.hierarchyLevel === selectedTierId);
+  const tierSessions = sessions.filter(s => s.hierarchyLevel === selectedTierId || (isBiMonthly && (s.hierarchyLevel === 'bi-monthly' || s.hierarchyLevel === 'bi-weekly')));
 
-  // Compute live department findings stats
-  const getDeptStats = (dept: DepartmentInfo) => {
-    const deptFindings = findings.filter(f => 
-      f.department.toLowerCase().includes(dept.name.toLowerCase()) || 
-      f.department.toLowerCase().includes(dept.code.toLowerCase())
-    );
-    const closed = deptFindings.filter(f => f.status === 'Closed').length;
-    const rate = deptFindings.length > 0 ? Math.round((closed / deptFindings.length) * 100) : 100;
-    return {
-      total: deptFindings.length,
-      closed,
-      rate
-    };
-  };
-
-  const currentDeptStats = getDeptStats(selectedDept);
+  // Findings explicitly associated with BI Monthly
+  const biMonthlyFindings = findings.filter(f => !f.hierarchyLevel || f.hierarchyLevel === 'bi-monthly' || f.hierarchyLevel === 'bi-weekly');
 
   // Handle adding new session
   const handleAddSession = (newSession: GenbaWalkthroughSession) => {
@@ -210,15 +209,24 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
           </p>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons: Only BI Monthly has input features */}
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           <button
             onClick={() => setIsSessionModalOpen(true)}
             className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-bold rounded-xl text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Input Agenda Walkthrough</span>
+            <span>+ Input Agenda BI Monthly</span>
           </button>
+          {onOpenNewFindingModal && (
+            <button
+              onClick={onOpenNewFindingModal}
+              className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-bold rounded-xl text-xs sm:text-sm shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-amber-400" />
+              <span>+ Input Temuan BI Monthly</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -247,25 +255,10 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
           }`}
         >
-          <Calendar className="w-4 h-4 text-blue-400" />
-          <span>Log &amp; Jadwal Agenda Walkthrough</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-slate-300">
+          <Calendar className="w-4 h-4 text-amber-400" />
+          <span>Jadwal Agenda BI Monthly</span>
+          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-400/20 text-amber-300 font-bold">
             {sessions.length} Sesi
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveSection('departments')}
-          className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer shrink-0 ${
-            activeSection === 'departments'
-              ? 'bg-slate-900 text-white shadow-xs'
-              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          }`}
-        >
-          <Network className="w-4 h-4 text-purple-400" />
-          <span>Struktur Departemen &amp; Matriks RACI</span>
-          <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-500/20 text-purple-300">
-            {DEPARTMENTS.length} Divisi
           </span>
         </button>
       </div>
@@ -445,6 +438,16 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
                               }`}>
                                 &bull; {tier.frequency}
                               </span>
+                              {(tier.id === 'bi-monthly' || tier.id === 'bi-weekly') ? (
+                                <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-amber-400 text-slate-950 uppercase tracking-tight">
+                                  INPUT AKTIF &bull; JADWAL &amp; TEMUAN
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-700/80 text-slate-300 uppercase tracking-tight flex items-center gap-0.5">
+                                  <ShieldCheck className="w-2.5 h-2.5 text-slate-400" />
+                                  STANDAR SOP (TANPA JADWAL/TEMUAN)
+                                </span>
+                              )}
                             </div>
 
                             <h3 className={`text-sm font-black tracking-tight mt-0.5 ${
@@ -463,14 +466,25 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
 
                         {/* Right stats badge */}
                         <div className="text-right shrink-0">
-                          <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-lg border flex items-center gap-1 ${
-                            isSelected 
-                              ? 'bg-amber-100 text-amber-900 border-amber-300'
-                              : 'bg-slate-900/70 text-slate-300 border-slate-700'
-                          }`}>
-                            <span>{tierSessionsCount} Agenda</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </span>
+                          {(tier.id === 'bi-monthly' || tier.id === 'bi-weekly') ? (
+                            <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-lg border flex items-center gap-1 ${
+                              isSelected 
+                                ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                : 'bg-slate-900/70 text-slate-300 border-slate-700'
+                            }`}>
+                              <span>{sessions.length} Agenda &amp; Temuan</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </span>
+                          ) : (
+                            <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border flex items-center gap-1 ${
+                              isSelected 
+                                ? 'bg-slate-100 text-slate-700 border-slate-300'
+                                : 'bg-slate-900/50 text-slate-400 border-slate-800'
+                            }`}>
+                              <span>Pedoman Standar SOP</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
@@ -512,7 +526,7 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
                 </div>
               </div>
 
-              {/* Action Buttons */}
+              {/* Action Buttons: Only BI Monthly has input features */}
               <div className="flex flex-wrap items-center gap-2 shrink-0">
                 <button
                   onClick={() => setIsEditTierModalOpen(true)}
@@ -522,13 +536,31 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
                   <span>Edit Konfigurasi Level</span>
                 </button>
 
-                <button
-                  onClick={() => setIsSessionModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5 text-amber-400" />
-                  <span>+ Jadwalkan Sesi Ini</span>
-                </button>
+                {isBiMonthly ? (
+                  <>
+                    <button
+                      onClick={() => setIsSessionModalOpen(true)}
+                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ Jadwalkan Agenda BI Monthly</span>
+                    </button>
+                    {onOpenNewFindingModal && (
+                      <button
+                        onClick={onOpenNewFindingModal}
+                        className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-amber-400" />
+                        <span>+ Input Temuan BI Monthly</span>
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-500 font-bold text-xs flex items-center gap-1.5 border border-slate-200 select-none">
+                    <Lock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Input Agenda &amp; Temuan Dinonaktifkan</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -608,93 +640,229 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
               </div>
             </div>
 
-            {/* Sesi Terjadwal & Riwayat untuk Level Ini */}
-            <div className="mt-8 pt-6 border-t border-slate-200">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-blue-600" />
-                    Agenda &amp; Riwayat Walkthrough Khusus {activeTier.name} ({tierSessions.length} Sesi)
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    Jadwal walkthrough kepemimpinan yang telah dicatat untuk tingkat ini
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsSessionModalOpen(true)}
-                  className="text-xs font-bold text-amber-700 hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Tambah Sesi</span>
-                </button>
-              </div>
-
-              {tierSessions.length === 0 ? (
-                <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                  <Calendar className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                  <p className="text-xs font-bold text-slate-600">Belum ada agenda walkthrough untuk tingkat ini.</p>
-                  <button
-                    onClick={() => setIsSessionModalOpen(true)}
-                    className="mt-2 text-xs font-bold text-amber-700 hover:underline cursor-pointer"
-                  >
-                    + Buat Agenda Sekarang
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {tierSessions.map((s) => (
-                    <div 
-                      key={s.id} 
-                      className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all flex flex-col justify-between"
-                    >
+            {/* Sesi Terjadwal & Riwayat / Temuan untuk Level Ini */}
+            <div className="mt-8 pt-6 border-t border-slate-200 space-y-6">
+              {isBiMonthly ? (
+                <>
+                  {/* Bagian 1: Agenda Walkthrough BI Monthly */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
                       <div>
-                        <div className="flex items-center justify-between text-[11px] mb-1.5">
-                          <span className="font-mono font-bold text-slate-500">{s.id}</span>
-                          <span 
-                            onClick={() => handleToggleSessionStatus(s.id)}
-                            className={`px-2 py-0.5 rounded-full font-bold cursor-pointer transition-colors ${
-                              s.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
-                              s.status === 'In Progress' ? 'bg-amber-100 text-amber-800' :
-                              'bg-blue-100 text-blue-800'
-                            }`}
-                            title="Klik untuk ubah status"
-                          >
-                            &bull; {s.status}
-                          </span>
-                        </div>
-
-                        <h4 className="text-xs font-bold text-slate-900 mb-1 line-clamp-2">
-                          {s.focusTheme}
-                        </h4>
-
-                        <p className="text-[11px] text-slate-500 mb-1 flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-slate-400" />
-                          <span>{s.area}</span>
+                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-amber-600" />
+                          Agenda &amp; Riwayat Walkthrough Khusus BI MONTHLY ({tierSessions.length} Sesi)
+                        </h3>
+                        <p className="text-xs text-slate-500">
+                          Jadwal walkthrough resmi bersama Adidas yang aktif dicatat pada sistem
                         </p>
-
-                        <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100 mb-2">
-                          <span className="font-semibold text-slate-900">Lead: </span>{s.leader}
-                          <br />
-                          <span className="font-semibold text-slate-900">Tim: </span>
-                          <span className="truncate">{s.participants}</span>
-                        </div>
                       </div>
+                      <button
+                        onClick={() => setIsSessionModalOpen(true)}
+                        className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>+ Tambah Sesi BI Monthly</span>
+                      </button>
+                    </div>
 
-                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {s.date} {s.time ? `(${s.time})` : ''}
-                        </span>
+                    {tierSessions.length === 0 ? (
+                      <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                        <Calendar className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-slate-600">Belum ada agenda walkthrough untuk tingkat BI Monthly.</p>
                         <button
-                          onClick={() => handleDeleteSession(s.id)}
-                          className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer transition-colors"
-                          title="Hapus sesi ini"
+                          onClick={() => setIsSessionModalOpen(true)}
+                          className="mt-2 text-xs font-bold text-amber-700 hover:underline cursor-pointer"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          + Buat Agenda Sekarang
                         </button>
                       </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {tierSessions.map((s) => (
+                          <div 
+                            key={s.id} 
+                            className="p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all flex flex-col justify-between"
+                          >
+                            <div>
+                              <div className="flex items-center justify-between text-[11px] mb-1.5">
+                                <span className="font-mono font-bold text-slate-500">{s.id}</span>
+                                <span 
+                                  onClick={() => handleToggleSessionStatus(s.id)}
+                                  className={`px-2 py-0.5 rounded-full font-bold cursor-pointer transition-colors ${
+                                    s.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
+                                    s.status === 'In Progress' ? 'bg-amber-100 text-amber-800' :
+                                    'bg-blue-100 text-blue-800'
+                                  }`}
+                                  title="Klik untuk ubah status"
+                                >
+                                  &bull; {s.status}
+                                </span>
+                              </div>
+
+                              <h4 className="text-xs font-bold text-slate-900 mb-1 line-clamp-2">
+                                {s.focusTheme}
+                              </h4>
+
+                              <p className="text-[11px] text-slate-500 mb-1 flex items-center gap-1">
+                                <MapPin className="w-3 h-3 text-slate-400" />
+                                <span>{s.area}</span>
+                              </p>
+
+                              <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100 mb-2">
+                                <span className="font-semibold text-slate-900">Lead: </span>{s.leader}
+                                <br />
+                                <span className="font-semibold text-slate-900">Tim: </span>
+                                <span className="truncate">{s.participants}</span>
+                              </div>
+                            </div>
+
+                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {s.date} {s.time ? `(${s.time})` : ''}
+                              </span>
+                              <button
+                                onClick={() => handleDeleteSession(s.id)}
+                                className="text-slate-400 hover:text-rose-600 p-1 cursor-pointer transition-colors"
+                                title="Hapus sesi ini"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bagian 2: Daftar Temuan Lapangan Khusus BI Monthly */}
+                  <div className="pt-6 border-t border-slate-200">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                            <Target className="w-4 h-4 text-emerald-600" />
+                            Pencatatan Temuan Lapangan Terkait BI Monthly ({biMonthlyFindings.length} Temuan)
+                          </h3>
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                            SATU-SATUNYA LEVEL AKTIF TEMUAN
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Semua perbaikan dan temuan inspeksi Genba dipusatkan pada tingkat BI Monthly
+                        </p>
+                      </div>
+
+                      {onOpenNewFindingModal && (
+                        <button
+                          onClick={onOpenNewFindingModal}
+                          className="px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 self-start sm:self-auto"
+                        >
+                          <Plus className="w-3.5 h-3.5 text-amber-400" />
+                          <span>+ Input Temuan BI Monthly</span>
+                        </button>
+                      )}
                     </div>
-                  ))}
+
+                    {biMonthlyFindings.length === 0 ? (
+                      <div className="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                        <p className="text-xs font-semibold text-slate-500">Belum ada temuan tercatat untuk BI Monthly.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {biMonthlyFindings.slice(0, 6).map((f) => (
+                          <div 
+                            key={f.id}
+                            className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition-all flex flex-col justify-between"
+                          >
+                            <div>
+                              <div className="flex items-center justify-between text-[10px] mb-1.5">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-mono font-bold text-slate-700">{f.id}</span>
+                                  <span className="font-black text-[9px] text-amber-950 bg-amber-100 border border-amber-300 px-1 py-0.2 rounded uppercase">
+                                    {f.factory || 'AOI 1'}
+                                  </span>
+                                </div>
+                                <span className={`px-2 py-0.5 rounded font-extrabold border ${
+                                  f.status === 'Closed' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
+                                  f.status === 'In Progress' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                                  'bg-rose-50 text-rose-800 border-rose-200'
+                                }`}>
+                                  {f.status}
+                                </span>
+                              </div>
+
+                              <p className="text-xs font-bold text-slate-900 line-clamp-2 mb-1">
+                                {f.finding}
+                              </p>
+
+                              <div className="text-[11px] text-slate-500 space-y-0.5">
+                                <p className="truncate"><span className="text-slate-700 font-semibold">Area:</span> {f.area}</p>
+                                <p><span className="text-slate-700 font-semibold">PIC:</span> {f.pic}</p>
+                              </div>
+                            </div>
+
+                            <div className="mt-2 pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px]">
+                              <span className="text-slate-400 font-mono text-[10px]">{f.date}</span>
+                              <div className="flex items-center gap-1.5">
+                                {onSelectPhotoProof && f.attachmentUrl && (
+                                  <button
+                                    onClick={() => onSelectPhotoProof(f)}
+                                    className="p-1 text-slate-500 hover:text-amber-700 rounded transition-colors"
+                                    title="Lihat Foto Bukti"
+                                  >
+                                    <Camera className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                {onEditFinding && (
+                                  <button
+                                    onClick={() => onEditFinding(f)}
+                                    className="px-2 py-0.5 rounded text-xs font-bold text-slate-700 hover:text-slate-950 hover:bg-slate-200 transition-colors cursor-pointer"
+                                  >
+                                    Detail &rarr;
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                /* Level Selain BI Monthly (BoD Genba, Cross Check, Daily Genba): Seluruh Fitur Jadwal & Temuan Ditiadakan */
+                <div className="space-y-4">
+                  <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-50 to-amber-50/30 border border-slate-200 text-xs text-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5 border border-amber-200">
+                        <ShieldCheck className="w-5 h-5 text-amber-700" />
+                      </div>
+                      <div className="space-y-1 max-w-2xl">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="font-black text-slate-900 text-sm">
+                            Fokus Tingkat {activeTier.name}: Pedoman SOP &amp; Tata Kelola Operasional
+                          </h4>
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-slate-200 text-slate-700 border border-slate-300">
+                            STANDAR OPERASIONAL RESMI
+                          </span>
+                        </div>
+                        <p className="leading-relaxed text-slate-600">
+                          Sesuai kebijakan optimasi performa dan integritas database, <strong>seluruh fitur penjadwalan agenda dan pencatatan temuan lapangan ditiadakan</strong> pada level {activeTier.name}.
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          Tingkat ini berfungsi sebagai acuan kepatuhan dan panduan lapangan (SOP Checklist). Seluruh penjadwalan inspeksi dan pencatatan temuan baru terpusat 100% pada <strong>BI MONTHLY (Adidas)</strong>.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedTierId('bi-monthly')}
+                      className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs shrink-0 cursor-pointer"
+                    >
+                      <span>Buka Jadwal &amp; Temuan BI Monthly</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -702,45 +870,57 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
         </div>
       )}
 
-      {/* SECTION 2: LOG & JADWAL SELURUH AGENDA WALKTHROUGH */}
+      {/* SECTION 2: LOG & JADWAL AGENDA WALKTHROUGH BI MONTHLY */}
       {activeSection === 'sessions' && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
             <div>
               <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-amber-600" />
-                Daftar Seluruh Agenda Walkthrough Berdasarkan Hirarki
+                Log &amp; Jadwal Agenda Walkthrough BI Monthly (Adidas)
               </h2>
               <p className="text-xs text-slate-500">
-                Pencatatan sesi inspeksi Genba terjadwal, sedang berjalan, dan riwayat selesai di pabrik
+                Pencatatan sesi inspeksi lapangan terjadwal, sedang berjalan, dan riwayat selesai khusus tingkat BI Monthly bersama brand partner Adidas.
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
                 <Filter className="w-3.5 h-3.5 text-slate-400" />
-                <span>Filter Level:</span>
+                <span>Filter Status:</span>
                 <select
-                  value={sessionFilterLevel}
-                  onChange={(e) => setSessionFilterLevel(e.target.value)}
+                  value={sessionFilterStatus}
+                  onChange={(e) => setSessionFilterStatus(e.target.value)}
                   className="bg-transparent font-semibold text-slate-800 outline-none cursor-pointer"
                 >
-                  <option value="all">Semua Level ({sessions.length})</option>
-                  <option value="bi-monthly">1. BI MONTHLY (Adidas)</option>
-                  <option value="bod-genba">2. BoD GENBA</option>
-                  <option value="cross-check">3. CROSS CHECK MANAGEMENT</option>
-                  <option value="daily-genba">4. DAILY GENBA SHOPFLOOR</option>
+                  <option value="all">Semua Status ({sessions.length})</option>
+                  <option value="Scheduled">Scheduled</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
                 </select>
               </div>
 
               <button
                 onClick={() => setIsSessionModalOpen(true)}
-                className="px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5 hover:bg-slate-800 transition-colors cursor-pointer"
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 text-amber-400" />
-                <span>+ Input Sesi</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Input Sesi BI Monthly</span>
               </button>
             </div>
+          </div>
+
+          {/* Optimization Policy Banner */}
+          <div className="bg-amber-50/70 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>
+                <strong>Kebijakan Optimasi Performa:</strong> Fitur penjadwalan agenda walkthrough dan pencatatan temuan ditiadakan pada tingkat BoD Genba, Cross Check, dan Daily Genba sehingga seluruh pengisian hanya aktif untuk <strong>BI Monthly (Adidas)</strong>.
+              </span>
+            </div>
+            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-200 text-amber-950 shrink-0">
+              Eksklusif BI Monthly
+            </span>
           </div>
 
           {/* Sessions Table */}
@@ -759,9 +939,9 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {sessions
-                  .filter(s => sessionFilterLevel === 'all' || s.hierarchyLevel === sessionFilterLevel || (sessionFilterLevel === 'bi-monthly' && s.hierarchyLevel === 'bi-weekly'))
+                  .filter(s => sessionFilterStatus === 'all' || s.status === sessionFilterStatus)
                   .map((session) => {
-                    const tier = hierarchyTiers.find(t => t.id === session.hierarchyLevel || (session.hierarchyLevel === 'bi-weekly' && t.id === 'bi-monthly')) || hierarchyTiers[0];
+                    const tier = hierarchyTiers.find(t => t.id === 'bi-monthly') || hierarchyTiers[0];
 
                     return (
                       <tr key={session.id} className="hover:bg-slate-50/70 transition-colors">
@@ -774,14 +954,9 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
                         </td>
 
                         <td className="py-3 px-3 whitespace-nowrap">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded border inline-flex items-center gap-1 ${
-                            session.hierarchyLevel === 'bi-monthly' || session.hierarchyLevel === 'bi-weekly' ? 'bg-amber-50 text-amber-900 border-amber-300' :
-                            session.hierarchyLevel === 'bod-genba' ? 'bg-blue-50 text-blue-900 border-blue-300' :
-                            session.hierarchyLevel === 'cross-check' ? 'bg-orange-50 text-orange-900 border-orange-300' :
-                            'bg-teal-50 text-teal-900 border-teal-300'
-                          }`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                            {tier.name}
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded border inline-flex items-center gap-1 bg-amber-50 text-amber-900 border-amber-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                            BI MONTHLY
                           </span>
                           <p className="text-[10px] text-slate-500 mt-0.5">{tier.subtitle}</p>
                         </td>
@@ -833,235 +1008,6 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
                   })}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* SECTION 3: STRUKTUR DEPARTEMEN & RACI MATRIX */}
-      {activeSection === 'departments' && (
-        <div className="space-y-6">
-          {/* Visual Organization Hierarchy Chart */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
-            <h2 className="text-base font-bold text-slate-900 mb-6 flex items-center gap-2 text-center justify-center">
-              <Network className="w-5 h-5 text-purple-600" />
-              Bagan Organisasi Manajemen Genba Walk Pabrik
-            </h2>
-
-            {/* Level 1: Plant General Manager (Apex) */}
-            <div className="max-w-md mx-auto mb-6">
-              <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950 text-white rounded-2xl p-5 shadow-lg border border-slate-700 text-center relative overflow-hidden">
-                <div className="absolute top-2 right-2 bg-amber-500 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded shadow">
-                  PLANT LEADERSHIP
-                </div>
-
-                <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-amber-400 p-0.5 shadow-md">
-                  <img
-                    src={PLANT_MANAGER_PROFILE.avatarUrl}
-                    alt={PLANT_MANAGER_PROFILE.name}
-                    className="w-full h-full object-cover rounded-full"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-
-                <h3 className="text-base font-bold text-white">{PLANT_MANAGER_PROFILE.name}</h3>
-                <p className="text-xs text-amber-300 font-semibold mb-2">{PLANT_MANAGER_PROFILE.title}</p>
-                <p className="text-[11px] text-slate-300 italic max-w-sm mx-auto mb-3">
-                  {PLANT_MANAGER_PROFILE.quote}
-                </p>
-
-                <div className="pt-2 border-t border-slate-700/60 flex items-center justify-around text-[11px] text-slate-400">
-                  <span>{PLANT_MANAGER_PROFILE.phone}</span>
-                  <span>&bull;</span>
-                  <span>Jadwal Genba: Setiap Selasa &amp; Kamis</span>
-                </div>
-              </div>
-
-              {/* Tree connector arrow */}
-              <div className="flex justify-center my-2">
-                <div className="w-0.5 h-6 bg-slate-300"></div>
-              </div>
-            </div>
-
-            {/* Level 2: Horizontal Departments Grid */}
-            <div className="pt-2 border-t border-slate-200">
-              <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
-                Departemen Terkait Operasional Pabrik &amp; Tim Penanggung Jawab
-              </p>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                {DEPARTMENTS.map((dept) => {
-                  const stats = getDeptStats(dept);
-                  const isSelected = selectedDept.id === dept.id;
-
-                  return (
-                    <button
-                      key={dept.id}
-                      onClick={() => setSelectedDept(dept)}
-                      className={`p-3.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer relative ${
-                        isSelected
-                          ? 'bg-purple-50/80 border-purple-500 ring-2 ring-purple-500/20 shadow-sm'
-                          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div>
-                        <div className="w-12 h-12 rounded-full overflow-hidden mb-2 border border-slate-200">
-                          <img
-                            src={dept.avatarUrl}
-                            alt={dept.headName}
-                            className="w-full h-full object-cover"
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-500 font-mono">
-                          {dept.code}
-                        </span>
-                        <h4 className="text-xs font-bold text-slate-900 leading-tight mt-0.5 line-clamp-2">
-                          {dept.name}
-                        </h4>
-                        <p className="text-[11px] text-slate-600 mt-1 truncate">
-                          {dept.headName.split(',')[0]}
-                        </p>
-                      </div>
-
-                      <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
-                        <span className="text-slate-400">{dept.teamSize} Org</span>
-                        <span className={`font-bold ${stats.rate >= 80 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                          {stats.rate}% Close
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Selected Department Responsibility Profile Detail */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-200">
-              <div className="flex items-start gap-4">
-                <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-slate-200 shrink-0 shadow-xs">
-                  <img
-                    src={selectedDept.avatarUrl}
-                    alt={selectedDept.headName}
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono font-extrabold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                      DEPARTEMEN {selectedDept.code}
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">
-                      {selectedDept.teamSize} Anggota Tim
-                    </span>
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-                    {selectedDept.name}
-                  </h2>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-600 mt-0.5">
-                    Pimpinan: <span className="text-slate-900 font-bold">{selectedDept.headName}</span> &bull; {selectedDept.headTitle}
-                  </p>
-                </div>
-              </div>
-
-              {/* Department Contact Card */}
-              <div className="flex flex-col sm:flex-row lg:flex-col gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 shrink-0">
-                <div className="flex items-center gap-2">
-                  <Phone className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{selectedDept.phone}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{selectedDept.email}</span>
-                </div>
-                <div className="flex items-center gap-2 font-semibold text-purple-700">
-                  <Target className="w-3.5 h-3.5" />
-                  <span>Penyelesaian Temuan: {currentDeptStats.closed}/{currentDeptStats.total} ({currentDeptStats.rate}%)</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Responsibility Profile Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              {/* Col 1: Peran Genba & Tanggung Jawab Kunci */}
-              <div className="space-y-5">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-600" />
-                    Peran Kunci dalam Kegiatan Genba Walk
-                  </h3>
-                  <p className="text-xs text-slate-700 leading-relaxed bg-amber-50/40 p-3.5 rounded-xl border border-amber-200">
-                    {selectedDept.genbaRoleDescription}
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <ClipboardList className="w-4 h-4 text-blue-600" />
-                    Tanggung Jawab Utama di Pabrik (Key Responsibilities)
-                  </h3>
-                  <ul className="space-y-2 text-xs text-slate-700">
-                    {selectedDept.keyResponsibilities.map((resp, idx) => (
-                      <li key={idx} className="flex items-start gap-2 p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>{resp}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Col 2: RACI Matrix & Area Cakupan Inspeksi */}
-              <div className="space-y-5">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-purple-600" />
-                    Matriks Akuntabilitas RACI (Genba Improvement)
-                  </h3>
-
-                  <div className="grid grid-cols-1 gap-2 text-xs">
-                    <div className="p-2.5 rounded-lg bg-rose-50/70 border border-rose-200">
-                      <span className="font-bold text-rose-800">R - Responsible:</span>
-                      <p className="text-rose-900/80 mt-0.5">{selectedDept.raci.responsible}</p>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-amber-50/70 border border-amber-200">
-                      <span className="font-bold text-amber-800">A - Accountable:</span>
-                      <p className="text-amber-900/80 mt-0.5">{selectedDept.raci.accountable}</p>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-blue-50/70 border border-blue-200">
-                      <span className="font-bold text-blue-800">C - Consulted:</span>
-                      <p className="text-blue-900/80 mt-0.5">{selectedDept.raci.consulted}</p>
-                    </div>
-
-                    <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200">
-                      <span className="font-bold text-emerald-800">I - Informed:</span>
-                      <p className="text-emerald-900/80 mt-0.5">{selectedDept.raci.informed}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <Building className="w-4 h-4 text-slate-600" />
-                    Area Cakupan Inspeksi (Scope of Walkthrough)
-                  </h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedDept.inspectionAreas.map((area, idx) => (
-                      <span 
-                        key={idx} 
-                        className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 border border-slate-200"
-                      >
-                        📍 {area}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}

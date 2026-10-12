@@ -4,7 +4,9 @@ import {
   GenbaActivityVisual, 
   FindingCategory,
   GenbaHierarchyTier,
-  GenbaWalkthroughSession
+  GenbaWalkthroughSession,
+  BiMonthlyAssessor,
+  UserAccount
 } from '../types';
 
 export const DEPARTMENTS: DepartmentInfo[] = [
@@ -188,6 +190,7 @@ export const PLANT_MANAGER_PROFILE = {
 export const INITIAL_FINDINGS: InspectionFinding[] = [
   {
     id: 'FND-2026-001',
+    factory: 'AOI 1',
     date: '2026-09-15',
     area: 'Cutting - Auto-Spreading Table Line 1',
     finding: 'Kabel instalasi sensor safety light curtain mesin cutting terkelupas dan menjulur keluar tanpa pelindung spiral conduit, berisiko tersangkut trolley bundle kain.',
@@ -210,6 +213,7 @@ export const INITIAL_FINDINGS: InspectionFinding[] = [
   },
   {
     id: 'FND-2026-002',
+    factory: 'AOI 2',
     date: '2026-09-16',
     area: 'Sewing - Main Line 1 (Station 06)',
     finding: 'Penumpukan tool perkakas gunting benang dan obeng berserakan di atas meja kerja mesin jahit tanpa dudukan jelas. Operator harus mencari gunting saat changeover style.',
@@ -232,6 +236,7 @@ export const INITIAL_FINDINGS: InspectionFinding[] = [
   },
   {
     id: 'FND-2026-003',
+    factory: 'AOI 1',
     date: '2026-09-18',
     area: 'Warehouse - Fabric Roll Storage (Zone B-12)',
     finding: 'Garis demarkasi pemisah jalur pejalan kaki dengan lintasan forklift sudah pudar dan terkelupas parah akibat gesekan roda forklift, membahayakan pejalan kaki di gudang kain.',
@@ -251,160 +256,6 @@ export const INITIAL_FINDINGS: InspectionFinding[] = [
     weekNumber: 37,
     notes: 'Pekerjaan pengecatan dilakukan malam hari saat warehouse operasional off-peak.',
     impactScore: 'Pemisahan tegas pedestrian vs alat berat, zero near-miss blindspot.'
-  },
-  {
-    id: 'FND-2026-004',
-    date: '2026-09-21',
-    area: 'Cutting - CNC Knife Bay #03',
-    finding: 'Ditemukan rembesan oli pelumas menetes di lantai bawah mesin potong otomatis CNC #03, berpotensi memicu bahaya terpeleset dan risiko mengotori kain tumpukan gelar.',
-    category: 'Waste & Elimination',
-    pic: 'Hendra Saputra (Cutting Tech) / Rahmat Hidayat',
-    department: 'Cutting',
-    correctiveAction: 'Penggantian O-ring seal flange pompa hidrolik, penambahan oil drip tray stainless steel, dan pembersihan lantai menggunakan absorbent pad degreaser.',
-    status: 'In Progress',
-    closeDate: undefined,
-    targetDate: '2026-09-23',
-    attachmentUrl: 'https://images.unsplash.com/photo-1616401784845-180882ba9ba8?w=800&auto=format&fit=crop&q=80',
-    attachmentAfterUrl: undefined,
-    photoCaption: 'Foto Before: Tetesan oli di lantai plat bordes bawah mesin potong',
-    priority: 'High',
-    inspectorName: 'Bpk. Ir. Hendra Gunawan (Plant GM)',
-    recordedBy: 'Siti Rahma (CI Officer / Notulen Genba)',
-    weekNumber: 38,
-    notes: 'Spare part seal kit sudah diambil dari store. Pemasangan dijadwalkan saat break shift 2 malam ini.',
-    impactScore: 'Pencegahan noda oli pada kain dan eliminasi bahaya slip & fall operator.'
-  },
-  {
-    id: 'FND-2026-005',
-    date: '2026-09-21',
-    area: 'Finishing Packing - Metal Detector Tunnel & Final Gate',
-    finding: 'Lampu penerangan pada meja inspeksi akhir garmen sebelum metal detector hanya 420 Lux (standar minimal 1000 Lux), menyebabkan blind spot pada serat benang sisa.',
-    category: 'Quality',
-    pic: 'Iwan Setiawan (FP Tech) / Agus Prasetyo',
-    department: 'Finishing Packing',
-    correctiveAction: 'Instalasi 4 unit LED daylight 6500K dengan diffuser anti-glare untuk mencapai intensitas pencahayaan 1250 Lux merata di meja folding dan tunnel detektor.',
-    status: 'In Progress',
-    closeDate: undefined,
-    targetDate: '2026-09-24',
-    attachmentUrl: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=800&auto=format&fit=crop&q=80',
-    attachmentAfterUrl: undefined,
-    photoCaption: 'Foto Before: Meja inspeksi finishing gelap berbayang (420 Lux)',
-    priority: 'High',
-    inspectorName: 'Ratna Kusuma (QA Head)',
-    recordedBy: 'Budi Santoso (FP Inspector)',
-    weekNumber: 38,
-    notes: 'Lampu LED khusus sudah tiba, teknisi maintenance dan FP akan menguji keseragaman lux besok pagi.',
-    impactScore: 'Pencegahan reject benang lolos ke buyer ekspor (Zero defect escape guarantee).'
-  },
-  {
-    id: 'FND-2026-006',
-    date: '2026-09-21',
-    area: 'Distribusi - Sewing Input Feeder Bay',
-    finding: 'Operator transfer bundle harus membungkuk 65 derajat dan memutar tubuh saat mengambil bundle kain berat dari keranjang lantai berulang kali (Ergonomic Hazard).',
-    category: 'Waste & Elimination',
-    pic: 'Teguh Wibowo (Distribusi Leader) / Dedi Kurniawan',
-    department: 'Distribusi',
-    correctiveAction: 'Rancang bangun meja trolley pegas berputar (Scissor Lift Tilter Trolley) beroda dengan ketinggian pas di pinggang operator (ergonomic golden zone).',
-    status: 'Open',
-    closeDate: undefined,
-    targetDate: '2026-09-25',
-    attachmentUrl: 'https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0?w=800&auto=format&fit=crop&q=80',
-    attachmentAfterUrl: undefined,
-    photoCaption: 'Foto Before: Postur membungkuk berulang mengangkat bundle kain dari lantai',
-    priority: 'Medium',
-    inspectorName: 'Bpk. Ir. Hendra Gunawan (Plant GM)',
-    recordedBy: 'Bayu Nugroho (Distribusi Staff / Notetaker)',
-    weekNumber: 38,
-    notes: 'Desain lift table sudah disetujui CI Dojo. Perakitan dilakukan di workshop internal.',
-    impactScore: 'Mengurangi keluhan sakit punggung operator transfer (RULA Score turun dari 7 ke 2).'
-  },
-  {
-    id: 'FND-2026-007',
-    date: '2026-09-20',
-    area: 'Warehouse - Finished Goods Export Bay',
-    finding: 'Satu unit tabung APAR powder 6kg di samping pintu loading dock nomor 2 jarum tekanannya berada di zona merah (kurang tekanan) dan kartu inspeksi belum diparaf.',
-    category: 'Safety Stop 6',
-    pic: 'Wahyudi (Safety Inspector) / Anita Wijaya',
-    department: 'Warehouse',
-    correctiveAction: 'Penukaran langsung dengan unit APAR cadangan tersertifikasi, pengisian ulang gas nitrogen tabung lama ke vendor, dan revisi checklist QR code inspeksi digital.',
-    status: 'Closed',
-    closeDate: '2026-09-21',
-    targetDate: '2026-09-21',
-    attachmentUrl: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=800&auto=format&fit=crop&q=80',
-    attachmentAfterUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80',
-    photoCaption: 'Foto Before: APAR pressure low | Foto After: Unit baru terpasang di hanger dengan QR tag',
-    priority: 'Critical',
-    inspectorName: 'Bpk. Ir. Hendra Gunawan (Plant GM)',
-    recordedBy: 'Tri Wahyuni (Warehouse Staff)',
-    weekNumber: 38,
-    notes: 'Tindakan selesai dalam 4 jam sesuai SOP darurat bahaya kebakaran gudang garmen ekspor.',
-    impactScore: 'Kesiapan 100% sistem proteksi kebakaran darurat gedung gudang bahan garmen.'
-  },
-  {
-    id: 'FND-2026-008',
-    date: '2026-09-19',
-    area: 'Distribusi - Main Transit Corridor & Route',
-    finding: 'Palet trolley transfer rusak dengan roda macet dan paku mencuat dibiarkan teronggok di jalur lintasan lorong utama antar gedung tanpa label afkir.',
-    category: '5R',
-    pic: 'Joko Susilo (Distribusi Leader) / Dedi Kurniawan',
-    department: 'Distribusi',
-    correctiveAction: 'Evakuasi trolley afkir ke bengkel maintenance, pemasangan papan penandaan khusus "Trolley Quarantine", dan pengadaan roda PU anti-macet baru.',
-    status: 'Closed',
-    closeDate: '2026-09-20',
-    targetDate: '2026-09-20',
-    attachmentUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&auto=format&fit=crop&q=80',
-    attachmentAfterUrl: 'https://images.unsplash.com/photo-1587293852726-70cdb56c2866?w=800&auto=format&fit=crop&q=80',
-    photoCaption: 'Foto Before: Roda trolley rusak | Foto After: Jalur transit bersih dan steril dari hambatan',
-    priority: 'Medium',
-    inspectorName: 'Rahmat Hidayat (Cutting Mgr)',
-    recordedBy: 'Andi Saputra (Distribusi Controller)',
-    weekNumber: 38,
-    notes: 'Diverifikasi langsung oleh tim safety dan supervisor distribusi.',
-    impactScore: 'Eliminasi risiko bundle kain robek tersangkut roda dan kelancaran alur transit 100%.'
-  },
-  {
-    id: 'FND-2026-009',
-    date: '2026-09-21',
-    area: 'Sewing - Main Line 5 (Brand Dedicated Line)',
-    finding: 'Penumpukan keranjang WIP potongan kain di ujung lini jahit menghambat alur lintasan ke area finishing tanpa tanda kanban buffer FIFO.',
-    category: 'Material Flow',
-    pic: 'Bambang Tri (Sewing Line Leader) / Ratna Kusuma',
-    department: 'Sewing',
-    correctiveAction: 'Pemasangan floor line demarcation satu arah (One-way flow) dan penyediaan buffer staging rack bertingkat sistem FIFO gravitasi.',
-    status: 'Pending Verification',
-    closeDate: undefined,
-    targetDate: '2026-09-24',
-    attachmentUrl: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=800&auto=format&fit=crop&q=80',
-    attachmentAfterUrl: 'https://images.unsplash.com/photo-1581092335397-9583fe92d232?w=800&auto=format&fit=crop&q=80',
-    photoCaption: 'Foto Before: Box WIP memblokir lorong jahit | Foto After: Jalur transit FIFO rapi teratur',
-    priority: 'High',
-    inspectorName: 'Bpk. Ir. Hendra Gunawan (Plant GM)',
-    recordedBy: 'Siti Rahma (CI Officer / Notulen Genba)',
-    weekNumber: 38,
-    notes: 'Pekerjaan fisik selesai, menunggu pengetesan alur kerja shift pagi sebelum status diubah ke Closed.',
-    impactScore: 'Kelancaran lead time transfer garmen setengah jadi ke finishing meningkat 25%.'
-  },
-  {
-    id: 'FND-2026-010',
-    date: '2026-09-14',
-    area: 'Finishing Packing - Steam Press & Ironing Station',
-    finding: 'Kabel instalasi pembumian (grounding) meja setrika uap industri kendor baut dudukannya, menyebabkan fluktuasi pemanas dan getaran pada selang uap berlebih.',
-    category: 'Quality',
-    pic: 'Arif Setiawan (Finishing Spv) / Agus Prasetyo',
-    department: 'Finishing Packing',
-    correctiveAction: 'Pembersihan permukaan kontak grounding tembaga dari kerak oksidasi, pengencangan baut torsi 45 Nm dengan spring washer, dan penandaan cat garis torsi kuning (Torque seal).',
-    status: 'Closed',
-    closeDate: '2026-09-15',
-    targetDate: '2026-09-16',
-    attachmentUrl: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=800&auto=format&fit=crop&q=80',
-    attachmentAfterUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=800&auto=format&fit=crop&q=80',
-    photoCaption: 'Foto Before: Grounding berkarat goyang | Foto After: Tembaga bersih & torque seal kuning',
-    priority: 'High',
-    inspectorName: 'Ratna Kusuma (QA Head)',
-    recordedBy: 'Budi Santoso (FP Inspector)',
-    weekNumber: 37,
-    notes: 'Suhu steam press terkalibrasi stabil kembali pada 160 derajat Celcius.',
-    impactScore: 'Menghindari risiko kain mengkilap (shine defect) dan kebocoran arus listrik.'
   }
 ];
 
@@ -557,8 +408,8 @@ export const GENBA_HIERARCHY_TIERS: GenbaHierarchyTier[] = [
     objectives: [
       'Verifikasi kepatuhan standar teknis kualitas jahitan & material apparel Adidas (A-01 Standard)',
       'Audit kepatuhan etika keselamatan kerja & lingkungan (EHS Brand Compliance)',
-      'Evaluasi ketertelusuran nomor lot material, barcode scan, dan kalibrasi needle detector',
-      'Review continuous improvement (CI Kaizen) pada lini berdedikasi Adidas'
+      'Evaluasi temuan akan 5R dan Melakukan perbaikan atas hasil temuan dengan menelusuri latar belakang temuan dan cara penyelesaian',
+      'Review dan melanjutkan Continuous Improvement pada seluruh area'
     ],
     standardChecklist: [
       'Kalibrasi & log 9-point needle detector (deteksi jarum patah) 100% tervalidasi',
@@ -697,46 +548,345 @@ export const INITIAL_WALKTHROUGH_SESSIONS: GenbaWalkthroughSession[] = [
     notes: 'Prioritas pada pengecekan log 9-point needle detector dan ketiadaan pin/jarum di area kerja operator.'
   },
   {
-    id: 'SES-2026-0902',
-    hierarchyLevel: 'bod-genba',
-    date: '2026-09-22',
-    time: '14:00 - 16:30 WIB',
+    id: 'SES-2026-0701',
+    hierarchyLevel: 'bi-monthly',
+    date: '2026-07-28',
+    time: '08:30 - 12:00 WIB',
     shift: 'General Office',
-    area: 'Main Assembly Line & Otomasi CNC Machining',
-    leader: 'Board of Directors (Bpk. Ir. Hendra Gunawan & Direksi Operasional)',
-    participants: 'President Director, Managing Director, Head of Manufacturing, Senior Division Heads',
-    focusTheme: 'Tinjauan CAPEX Upgrade Sistem Exhaust Ventilasi & Otomasi Konveyor Robotik',
-    status: 'In Progress',
-    totalFindingsCount: 2,
-    notes: 'Persetujuan langsung anggaran modifikasi sistem pendingin udara lini jahit untuk kenyamanan operator.'
-  },
-  {
-    id: 'SES-2026-0903',
-    hierarchyLevel: 'cross-check',
-    date: '2026-09-18',
-    time: '10:00 - 12:00 WIB',
-    shift: 'Shift 1',
-    area: 'Tooling & Die Storage Room & Stamping Press Bay',
-    leader: 'Fajar Ramadhan, S.T. (CI & Lean Lead) & Tim Auditor Silang QA',
-    participants: 'QA Manager, Maintenance Lead, Production Supervisor, EHS Officer',
-    focusTheme: 'Audit Silang Standar 5S & Poka-Yoke Proteksi Sensor Cetakan Die',
+    area: 'Cutting & Pre-Assembly Zone, Chemical Storage EHS',
+    leader: 'Ir. Hendra Gunawan & Auditor Regional Adidas',
+    participants: 'Plant Manager, EHS Manager, Head of Production, Quality Assurance Lead',
+    focusTheme: 'Tinjauan Kepatuhan Lingkungan EHS & Kalibrasi Alat Pemotong Presisi Ekspor',
     status: 'Completed',
-    totalFindingsCount: 4,
-    notes: 'Temuan penataan kabel sensor hidrolik dan demarkasi area pallet telah ditutup dengan verifikasi foto.'
-  },
-  {
-    id: 'SES-2026-0904',
-    hierarchyLevel: 'daily-genba',
-    date: '2026-09-22',
-    time: '07:30 - 08:30 WIB',
-    shift: 'Shift 1',
-    area: 'Shopfloor Sewing Cell A & B - In Line Inspection',
-    leader: 'GL Produksi Bpk. Joko Santoso & Supervisor Shift',
-    participants: 'Group Leader (GL), Line Supervisor, Line QC, Teknisi Maintenance On-Duty',
-    focusTheme: 'Shopfloor Routine Check: APD Operator, Kerapian Meja Jahit & First Piece Inspection',
-    status: 'Completed',
-    totalFindingsCount: 3,
-    notes: 'Pembersihan serat benang di motor penggerak mesin jahit langsung dilakukan dalam 30 menit.'
+    totalFindingsCount: 5,
+    notes: 'Seluruh temuan perbaikan ventilasi dan APD kimiawi telah diverifikasi dan dinyatakan Closed.'
   }
 ];
+
+export const BI_MONTHLY_ASSESSORS: BiMonthlyAssessor[] = [
+  // --- GROUP 1: FACILITATOR ---
+  {
+    id: 'ASR-F01',
+    group: 'Facilitator',
+    name: 'Mr. Michael Chen',
+    title: 'Country QA & Brand Compliance Lead',
+    department: 'Adidas Brand Global Sourcing',
+    area: 'Dedicated Adidas Lines, QA Gates & Final Packaging',
+    mandatoryStatus: 'Lead Facilitator',
+    attendanceConfirmed: true,
+    email: 'michael.chen@adidas.com',
+    phone: '+65 9123-4567',
+    notes: 'Auditor kepala brand Adidas. Memfasilitasi verifikasi standar global A-01, audit etika K3, dan kepatuhan shipment.'
+  },
+  {
+    id: 'ASR-F02',
+    group: 'Facilitator',
+    name: 'Ir. Hendra Gunawan, IPM',
+    title: 'Plant General Manager & Operational Director',
+    department: 'Plant Executive Leadership',
+    area: 'Seluruh Fasilitas & Area Produksi Pabrik',
+    mandatoryStatus: 'Lead Facilitator',
+    attendanceConfirmed: true,
+    email: 'hendra.gunawan@factory-genba.co.id',
+    phone: 'Ext. 2001',
+    notes: 'Executive Sponsor & Lead Operasional. Pengambil keputusan otorisasi dan alokasi resource perbaikan CAPEX/OPEX.'
+  },
+  {
+    id: 'ASR-F03',
+    group: 'Facilitator',
+    name: 'Fajar Ramadhan, S.T.',
+    title: 'Head of Operational Excellence & Continuous Improvement',
+    department: 'Operational Excellence (OE / CI)',
+    area: 'Kaizen Board, Shopfloor Yamazumi & Flow Balancing',
+    mandatoryStatus: 'Wajib Hadir (Mandatory)',
+    attendanceConfirmed: true,
+    email: 'fajar.ramadhan@factory-genba.co.id',
+    phone: 'Ext. 2045',
+    notes: 'Fasilitator teknis Genba Walk. Mengatur alur rute inspeksi, pencatatan SLA temuan, dan moderasi diskusi perbaikan.'
+  },
+  {
+    id: 'ASR-F04',
+    group: 'Facilitator',
+    name: 'Siti Rahma, S.Kom.',
+    title: 'CI Officer & Genba Minutes Secretary',
+    department: 'Operational Excellence (OE / CI)',
+    area: 'Seluruh Checkpoint Inspeksi (Digital Recording Station)',
+    mandatoryStatus: 'Wajib Hadir (Mandatory)',
+    attendanceConfirmed: true,
+    email: 'siti.rahma@factory-genba.co.id',
+    phone: 'Ext. 2046',
+    notes: 'Pencatat resmi notulen dan foto bukti perbaikan digital. Pengelola log temuan Bi-Monthly dan distribusi action item.'
+  },
+
+  // --- GROUP 2: PIC AREA ---
+  {
+    id: 'ASR-P01',
+    group: 'PIC Area',
+    name: 'Ibu Anita Wijaya, S.E., M.M.',
+    title: 'Head of Warehouse & Inventory Control',
+    department: 'Warehouse (WH)',
+    area: 'Fabric Roll Storage, Trims Room & Finished Goods',
+    mandatoryStatus: 'Standby di Area',
+    attendanceConfirmed: true,
+    email: 'anita.wijaya@factory-genba.co.id',
+    phone: 'Ext. 2101',
+    notes: 'PIC tuan rumah gudang. Bertanggung jawab atas sistem FIFO kain roll, relaksasi kain, kebersihan palet, dan akurasi lot trims.'
+  },
+  {
+    id: 'ASR-P02',
+    group: 'PIC Area',
+    name: 'Bpk. Ir. Rahmat Hidayat, M.T.',
+    title: 'Cutting Department Manager',
+    department: 'Cutting (CUT)',
+    area: 'Auto-Spreading Table, Auto-Cutter Bay & Fusing Station',
+    mandatoryStatus: 'Standby di Area',
+    attendanceConfirmed: true,
+    email: 'rahmat.hidayat@factory-genba.co.id',
+    phone: 'Ext. 2201',
+    notes: 'PIC tuan rumah cutting. Bertanggung jawab atas presisi pola potong, mesh glove keselamatan, dan shading bundle kain.'
+  },
+  {
+    id: 'ASR-P03',
+    group: 'PIC Area',
+    name: 'Bpk. Dedi Kurniawan, S.T.',
+    title: 'Internal Logistics & Distribution Supervisor',
+    department: 'Distribusi (DIST)',
+    area: 'Bundle Transfer Pathway & Sewing Input Staging',
+    mandatoryStatus: 'Standby di Area',
+    attendanceConfirmed: true,
+    email: 'dedi.kurniawan@factory-genba.co.id',
+    phone: 'Ext. 2301',
+    notes: 'PIC alur transfer. Bertanggung jawab atas marka demarkasi lintasan trolley, kelancaran feeder, dan pencegahan bundle mix-up.'
+  },
+  {
+    id: 'ASR-P04',
+    group: 'PIC Area',
+    name: 'Ibu Ratna Kusuma, S.T.',
+    title: 'Sewing Production Senior Manager',
+    department: 'Sewing (SEW)',
+    area: 'Dedicated Adidas Sewing Lines 1 - 8 & In-line QC',
+    mandatoryStatus: 'Standby di Area',
+    attendanceConfirmed: true,
+    email: 'ratna.kusuma@factory-genba.co.id',
+    phone: 'Ext. 2401',
+    notes: 'PIC tuan rumah penjahitan. Bertanggung jawab atas Broken Needle Policy, 5S meja jahit, dan kualitas kerapian jahitan.'
+  },
+  {
+    id: 'ASR-P05',
+    group: 'PIC Area',
+    name: 'Bpk. Agus Prasetyo, S.T.',
+    title: 'Head of Finishing & Packaging Operations',
+    department: 'Finishing Packing (FP)',
+    area: 'Calibrated Metal Detector Tunnel & Steam Press Station',
+    mandatoryStatus: 'Standby di Area',
+    attendanceConfirmed: true,
+    email: 'agus.prasetyo@factory-genba.co.id',
+    phone: 'Ext. 2501',
+    notes: 'PIC tuan rumah finishing. Bertanggung jawab atas kalibrasi 9-titik detektor logam, kerapian folding, dan kartonasi ekspor.'
+  },
+  {
+    id: 'ASR-P06',
+    group: 'PIC Area',
+    name: 'Bpk. Arif Wibowo, S.K.M.',
+    title: 'EHS & Sustainability Officer',
+    department: 'EHS & K3',
+    area: 'B3 Chemical Storage, Waste Sorting & Emergency Exits',
+    mandatoryStatus: 'Standby di Area',
+    attendanceConfirmed: true,
+    email: 'arif.wibowo@factory-genba.co.id',
+    phone: 'Ext. 2601',
+    notes: 'PIC tuan rumah K3 & lingkungan. Bertanggung jawab atas kelengkapan MSDS kimia, spill kit, dan jalur evakuasi bebas rintangan.'
+  },
+
+  // --- GROUP 3: ASSESSORS ---
+  {
+    id: 'ASR-A01',
+    group: 'Assessors',
+    name: 'Irwan Prasetya, S.T.',
+    title: 'Senior Quality Assurance Lead Assessor',
+    department: 'Quality Assurance (QA)',
+    area: 'Sewing Seam Strength, Needle Calibration & Stitch Density',
+    mandatoryStatus: 'Wajib Hadir (Mandatory)',
+    attendanceConfirmed: true,
+    email: 'irwan.prasetya@factory-genba.co.id',
+    phone: 'Ext. 2701',
+    notes: 'Auditor teknis kualitas Adidas A-01. Memeriksa kerapian jahitan, tension benang, log pergantian jarum, dan defect rate.'
+  },
+  {
+    id: 'ASR-A02',
+    group: 'Assessors',
+    name: 'Linda Mayasari',
+    title: 'In-Line QC Specialist & Color Matching Assessor',
+    department: 'Quality Control (QC)',
+    area: 'Fabric Inspection Table, Shading & Trims Consistency',
+    mandatoryStatus: 'Wajib Hadir (Mandatory)',
+    attendanceConfirmed: true,
+    email: 'linda.mayasari@factory-genba.co.id',
+    phone: 'Ext. 2705',
+    notes: 'Assessor verifikasi shading warna bahan, lux pencahayaan meja inspeksi (min 1000 Lux), dan kelayakan barcode trims.'
+  },
+  {
+    id: 'ASR-A03',
+    group: 'Assessors',
+    name: 'Rian Firmansyah',
+    title: 'Safety Stop 6 & EHS Certified Assessor',
+    department: 'Environment, Health & Safety (EHS)',
+    area: 'Machine Guarding, Pinch Points, Electrical Panels & APD',
+    mandatoryStatus: 'Wajib Hadir (Mandatory)',
+    attendanceConfirmed: true,
+    email: 'rian.firmansyah@factory-genba.co.id',
+    phone: 'Ext. 2605',
+    notes: 'Assessor kepatuhan Stop 6 Hazard. Menilai cover puli dinamo, eye guard mesin jahit, grounding panel, dan pemakaian APD.'
+  },
+  {
+    id: 'ASR-A04',
+    group: 'Assessors',
+    name: 'Joko Susilo',
+    title: 'Senior Maintenance & Poka-Yoke Assessor',
+    department: 'Maintenance & Facility Engineering',
+    area: 'Interlock Sensors, Pneumatic Air Pressure & Tool Calibration',
+    mandatoryStatus: 'Wajib Hadir (Mandatory)',
+    attendanceConfirmed: true,
+    email: 'joko.susilo@factory-genba.co.id',
+    phone: 'Ext. 2801',
+    notes: 'Assessor fungsi poka-yoke teknis, keandalan safety interlock mesin potong, dan kalibrasi uji bola detektor logam.'
+  },
+  {
+    id: 'ASR-A05',
+    group: 'Assessors',
+    name: 'Nurul Hidayati, S.Psi.',
+    title: 'Social Compliance & Ergonomics Assessor',
+    department: 'HR & Labor Compliance',
+    area: 'Shopfloor Ergonomics, Ventilation & Operator Hydration',
+    mandatoryStatus: 'Wajib Hadir (Mandatory)',
+    attendanceConfirmed: true,
+    email: 'nurul.hidayati@factory-genba.co.id',
+    phone: 'Ext. 2901',
+    notes: 'Assessor standar perlakuan pekerja & etika kerja (Adidas Code of Conduct), sirkulasi udara lini, dan kenyamanan kursi operator.'
+  },
+  {
+    id: 'ASR-A06',
+    group: 'Assessors',
+    name: 'Bambang Sudiro',
+    title: 'Cross-Line 5S & Kaizen Assessor',
+    department: 'Operational Excellence (OE / CI)',
+    area: '5S Visual Shadow Boards, Tool Organization & Waste Flow',
+    mandatoryStatus: 'Wajib Hadir (Mandatory)',
+    attendanceConfirmed: true,
+    email: 'bambang.sudiro@factory-genba.co.id',
+    phone: 'Ext. 2048',
+    notes: 'Assessor audit silang 5R/5S shopfloor. Memeriksa kerapian meja kerja, visual labelling rak, dan eliminasi waste gerakan operator.'
+  }
+];
+
+export interface AuthCredential {
+  password: string;
+  account: {
+    id: string;
+    username: string;
+    name: string;
+    role: 'admin' | 'anggota';
+    title: string;
+    department: string;
+    email?: string;
+  };
+}
+
+export const SYSTEM_ACCOUNTS: AuthCredential[] = [
+  {
+    password: 'genbaadidas',
+    account: {
+      id: 'USR-ADMIN-1',
+      username: 'admin',
+      name: 'Ir. Hendra Gunawan',
+      role: 'admin',
+      title: 'Plant General Manager & Kaizen Lead',
+      department: 'Continuous Improvement (Admin Pusat)',
+      email: 'hendra.gunawan@aoi.co.id'
+    }
+  },
+  {
+    password: 'genbaadidas',
+    account: {
+      id: 'USR-ADMIN-2',
+      username: 'admin_kaizen',
+      name: 'Ir. Hendra Gunawan',
+      role: 'admin',
+      title: 'Plant General Manager & Kaizen Lead',
+      department: 'Continuous Improvement (Admin Pusat)',
+      email: 'admin.genba@aoi.co.id'
+    }
+  },
+  {
+    password: 'membergenba',
+    account: {
+      id: 'USR-ANGGOTA-1',
+      username: 'member',
+      name: 'Rian Kurniawan, S.T.',
+      role: 'anggota',
+      title: 'Field Inspector & Shopfloor Assessor',
+      department: 'Quality Assurance & Genba Team',
+      email: 'rian.kurniawan@aoi.co.id'
+    }
+  },
+  {
+    password: 'membergenba',
+    account: {
+      id: 'USR-ANGGOTA-2',
+      username: 'anggota',
+      name: 'Rian Kurniawan, S.T.',
+      role: 'anggota',
+      title: 'Field Inspector & Shopfloor Assessor',
+      department: 'Quality Assurance & Genba Team',
+      email: 'rian.kurniawan@aoi.co.id'
+    }
+  },
+  {
+    password: 'membergenba',
+    account: {
+      id: 'USR-ANGGOTA-3',
+      username: 'user',
+      name: 'Rian Kurniawan, S.T.',
+      role: 'anggota',
+      title: 'Field Inspector & Shopfloor Assessor',
+      department: 'Quality Assurance & Genba Team',
+      email: 'rian.kurniawan@aoi.co.id'
+    }
+  },
+  {
+    password: 'membergenba',
+    account: {
+      id: 'USR-ANGGOTA-4',
+      username: 'anggota_qc',
+      name: 'Siti Rahayu',
+      role: 'anggota',
+      title: 'Supervisor Lini Sewing & 5S Auditor',
+      department: 'Production Sewing Line 4',
+      email: 'siti.rahayu@aoi.co.id'
+    }
+  }
+];
+
+export const verifyCredentials = (usernameInput: string, passwordInput: string): { success: boolean; account?: UserAccount; error?: string } => {
+  const cleanUser = usernameInput.trim().toLowerCase();
+  const cleanPass = passwordInput.trim();
+
+  if (!cleanUser || !cleanPass) {
+    return { success: false, error: 'Silakan isi Username dan Password.' };
+  }
+
+  const match = SYSTEM_ACCOUNTS.find(
+    (acc) => acc.account.username.toLowerCase() === cleanUser && acc.password === cleanPass
+  );
+
+  if (match) {
+    return { success: true, account: match.account };
+  }
+
+  return { 
+    success: false, 
+    error: 'Username atau Password salah. Silakan periksa kembali username dan password Anda.' 
+  };
+};
+
 

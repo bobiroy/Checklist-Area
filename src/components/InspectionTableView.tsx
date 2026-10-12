@@ -15,9 +15,11 @@ import {
   Camera,
   Printer,
   UserCheck,
-  ShieldCheck
+  ShieldCheck,
+  Lock,
+  KeyRound
 } from 'lucide-react';
-import { InspectionFinding, FindingCategory, FindingStatus } from '../types';
+import { InspectionFinding, FindingCategory, FindingStatus, UserAccount } from '../types';
 import { FACTORY_AREAS, FINDING_CATEGORIES, DEPARTMENTS } from '../data/mockData';
 
 interface InspectionTableViewProps {
@@ -27,6 +29,8 @@ interface InspectionTableViewProps {
   onDeleteFinding?: (id: string) => void;
   onSelectPhotoProof: (finding: InspectionFinding) => void;
   onQuickUpdateStatus: (id: string, newStatus: FindingStatus) => void;
+  currentUser?: UserAccount | null;
+  onOpenLoginModal?: (reason?: string) => void;
 }
 
 export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
@@ -34,9 +38,12 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
   onOpenNewFindingModal,
   onEditFinding,
   onSelectPhotoProof,
-  onQuickUpdateStatus
+  onQuickUpdateStatus,
+  currentUser,
+  onOpenLoginModal
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFactory, setSelectedFactory] = useState<string>('ALL');
   const [selectedArea, setSelectedArea] = useState<string>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
@@ -50,6 +57,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
         const q = searchQuery.toLowerCase();
         const matchText = 
           item.id.toLowerCase().includes(q) ||
+          (item.factory && item.factory.toLowerCase().includes(q)) ||
           item.finding.toLowerCase().includes(q) ||
           item.area.toLowerCase().includes(q) ||
           item.pic.toLowerCase().includes(q) ||
@@ -58,6 +66,11 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
           (item.recordedBy && item.recordedBy.toLowerCase().includes(q)) ||
           item.inspectorName.toLowerCase().includes(q);
         if (!matchText) return false;
+      }
+
+      // Filter Factory
+      if (selectedFactory !== 'ALL' && item.factory !== selectedFactory) {
+        return false;
       }
 
       // Filter Area
@@ -82,12 +95,13 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
 
       return true;
     });
-  }, [findings, searchQuery, selectedArea, selectedCategory, selectedStatus, selectedDept]);
+  }, [findings, searchQuery, selectedFactory, selectedArea, selectedCategory, selectedStatus, selectedDept]);
 
   // Export CSV function
   const handleExportCSV = () => {
     const headers = [
       'ID',
+      'Factory',
       '1. Date',
       '2. Area',
       '3. Assessor (Penginput)',
@@ -105,6 +119,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
 
     const rows = filteredFindings.map((f) => [
       f.id,
+      `"${f.factory || 'AOI 1'}"`,
       `"${f.date}"`,
       `"${f.area}"`,
       `"${(f.recordedBy || f.inspectorName).replace(/"/g, '""')}"`,
@@ -132,6 +147,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
 
   const resetFilters = () => {
     setSearchQuery('');
+    setSelectedFactory('ALL');
     setSelectedArea('ALL');
     setSelectedCategory('ALL');
     setSelectedStatus('ALL');
@@ -158,14 +174,39 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* User Role Authority Badge */}
+          {currentUser && (
+            <button
+              type="button"
+              onClick={onOpenLoginModal ? () => onOpenLoginModal() : undefined}
+              className={`no-print px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs border transition-all cursor-pointer ${
+                currentUser.role === 'admin'
+                  ? 'bg-amber-50 hover:bg-amber-100 text-amber-950 border-amber-300'
+                  : 'bg-blue-50 hover:bg-blue-100 text-blue-950 border-blue-300'
+              }`}
+              title="Klik untuk membuka Menu Log In"
+            >
+              {currentUser.role === 'admin' ? (
+                <>
+                  <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Admin: Berwenang Close Temuan</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="w-4 h-4 text-rose-500 shrink-0" />
+                  <span>Anggota: Hanya Admin Berhak Close</span>
+                </>
+              )}
+            </button>
+          )}
+
           {/* Audit Protection Notice: Temuan bersifat permanen dan tidak dapat dihapus */}
           <div 
             className="no-print px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs"
             title="Sesuai standar audit ISO 9001 / SMK3, seluruh catatan temuan bersifat permanen dan tidak dapat dihapus."
           >
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="hidden sm:inline">Proteksi Audit: Temuan Tidak Dapat Dihapus</span>
-            <span className="sm:hidden">Audit Terproteksi</span>
+            <span className="hidden sm:inline">Proteksi Audit</span>
           </div>
 
           <button
@@ -215,7 +256,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
           {/* Quick status summary info */}
           <div className="text-xs text-slate-500 flex items-center gap-2 self-start md:self-auto">
             <span>Menampilkan <strong>{filteredFindings.length}</strong> dari <strong>{findings.length}</strong> total temuan</span>
-            {(searchQuery || selectedArea !== 'ALL' || selectedCategory !== 'ALL' || selectedStatus !== 'ALL' || selectedDept !== 'ALL') && (
+            {(searchQuery || selectedFactory !== 'ALL' || selectedArea !== 'ALL' || selectedCategory !== 'ALL' || selectedStatus !== 'ALL' || selectedDept !== 'ALL') && (
               <button
                 onClick={resetFilters}
                 className="text-amber-700 hover:text-amber-800 font-bold flex items-center gap-1 ml-2 text-xs"
@@ -228,8 +269,23 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
         </div>
 
         {/* Filters Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-100 text-xs">
-          {/* Filter 1: Area */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-3 border-t border-slate-100 text-xs">
+          {/* Filter 1: Factory */}
+          <div>
+            <label className="block font-bold text-slate-600 mb-1">Filter Factory</label>
+            <select
+              value={selectedFactory}
+              onChange={(e) => setSelectedFactory(e.target.value)}
+              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-xs font-semibold"
+            >
+              <option value="ALL">Semua Factory</option>
+              <option value="AOI 1">AOI 1</option>
+              <option value="AOI 2">AOI 2</option>
+              <option value="AOI 3">AOI 3</option>
+            </select>
+          </div>
+
+          {/* Filter 2: Area */}
           <div>
             <label className="block font-bold text-slate-600 mb-1">Filter Area</label>
             <select
@@ -354,8 +410,13 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
                       </span>
                     </td>
 
-                    {/* 2. Area */}
+                    {/* 2. Area & Factory */}
                     <td className="py-3 px-4">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-[10px] font-black px-1.5 py-0.2 rounded bg-amber-100 text-amber-950 border border-amber-300 uppercase tracking-tight">
+                          {item.factory || 'AOI 1'}
+                        </span>
+                      </div>
                       <div className="flex items-start gap-1 font-semibold text-slate-900">
                         <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
                         <span className="leading-snug">{item.area}</span>
@@ -467,7 +528,16 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
                     <td className="py-3 px-4 whitespace-nowrap">
                       <select
                         value={item.status}
-                        onChange={(e) => onQuickUpdateStatus(item.id, e.target.value as FindingStatus)}
+                        onChange={(e) => {
+                          const newStatus = e.target.value as FindingStatus;
+                          if (newStatus === 'Closed' && currentUser && currentUser.role !== 'admin') {
+                            if (onOpenLoginModal) {
+                              onOpenLoginModal('Hanya Admin yang memiliki otorisasi untuk menutup temuan (Closed). Silakan login sebagai Admin.');
+                            }
+                            return;
+                          }
+                          onQuickUpdateStatus(item.id, newStatus);
+                        }}
                         className={`text-xs font-bold px-2.5 py-1 rounded-lg border transition-colors cursor-pointer ${
                           item.status === 'Closed'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
@@ -481,7 +551,9 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
                         <option value="Open">🔴 Open</option>
                         <option value="In Progress">🟡 In Progress</option>
                         <option value="Pending Verification">🔵 Pending Verification</option>
-                        <option value="Closed">🟢 Closed</option>
+                        <option value="Closed" disabled={currentUser?.role !== 'admin'}>
+                          🟢 Closed {currentUser?.role !== 'admin' ? '(🔒 Khusus Admin)' : ''}
+                        </option>
                       </select>
                     </td>
 

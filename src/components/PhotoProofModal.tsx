@@ -47,6 +47,9 @@ export const PhotoProofModal: React.FC<PhotoProofModalProps> = ({
               <span className="font-mono text-xs font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
                 {finding.id}
               </span>
+              <span className="font-extrabold text-xs text-amber-950 bg-amber-200/90 px-2 py-0.5 rounded border border-amber-300 uppercase tracking-tight">
+                {finding.factory || 'AOI 1'}
+              </span>
               <span className={`text-xs px-2.5 py-0.5 rounded-full font-bold border ${
                 finding.status === 'Closed'
                   ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -105,8 +108,10 @@ export const PhotoProofModal: React.FC<PhotoProofModalProps> = ({
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
               <div>
-                <p className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Area Kerja</p>
-                <p className="font-medium text-slate-800 truncate" title={finding.area}>{finding.area}</p>
+                <p className="text-slate-400 text-[10px] uppercase tracking-wider font-semibold">Area Kerja &amp; Factory</p>
+                <p className="font-medium text-slate-800 truncate" title={`${finding.area} (${finding.factory || 'AOI 1'})`}>
+                  {finding.area} <span className="font-bold text-[10px] text-amber-900 bg-amber-100 px-1 rounded ml-1">({finding.factory || 'AOI 1'})</span>
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">

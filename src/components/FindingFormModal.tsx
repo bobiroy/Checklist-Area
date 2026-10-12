@@ -17,15 +17,19 @@ import {
   ExternalLink,
   ArrowRight,
   TrendingUp,
-  ShieldAlert,
-  HelpCircle
+  HelpCircle,
+  Building2,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 import { 
   InspectionFinding, 
   FindingCategory, 
   FindingStatus, 
   PriorityLevel, 
-  GenbaHierarchyLevel 
+  GenbaHierarchyLevel,
+  FactoryOption,
+  UserAccount
 } from '../types';
 import { 
   FINDING_CATEGORIES, 
@@ -38,13 +42,19 @@ interface FindingFormModalProps {
   onClose: () => void;
   onSubmit: (finding: InspectionFinding) => void;
   initialData?: InspectionFinding | null;
+  defaultFactory?: FactoryOption;
+  currentUser?: UserAccount | null;
+  onRequireAdmin?: (reason: string) => void;
 }
 
 export const FindingFormModal: React.FC<FindingFormModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  initialData
+  initialData,
+  defaultFactory,
+  currentUser,
+  onRequireAdmin
 }) => {
   const isEditing = !!initialData;
 
@@ -52,6 +62,7 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<'progress' | 'details'>('progress');
 
   // Form states
+  const [factory, setFactory] = useState<FactoryOption>('AOI 1');
   const [date, setDate] = useState('');
   const [area, setArea] = useState('');
   const [findingText, setFindingText] = useState('');
@@ -80,6 +91,7 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
+        setFactory(initialData.factory || 'AOI 1');
         setDate(initialData.date || new Date().toISOString().split('T')[0]);
         setArea(initialData.area || '');
         setFindingText(initialData.finding || '');
@@ -102,11 +114,12 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
       } else {
         // Reset for new finding (Seluruh temuan otomatis masuk ke BI Genba)
         const todayStr = new Date().toISOString().split('T')[0];
+        setFactory(defaultFactory || 'AOI 1');
         setDate(todayStr);
         setArea('');
         setFindingText('');
         setCategory('5R');
-        setRecordedBy('');
+        setRecordedBy(currentUser ? currentUser.name : '');
         setInspectorName('Bpk. Ir. Hendra Gunawan (Plant GM)');
         setPic('');
         setDepartment(DEPARTMENTS[0].name);
@@ -127,7 +140,7 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
       setShowPresetsBefore(false);
       setShowPresetsAfter(false);
     }
-  }, [isOpen, initialData]);
+  }, [isOpen, initialData, currentUser]);
 
   if (!isOpen) return null;
 
@@ -157,6 +170,16 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
 
   // Quick handler when changing status
   const handleStatusChange = (newStatus: FindingStatus) => {
+    // RESTRICTION: Only Admin can close findings!
+    if (newStatus === 'Closed' && currentUser && currentUser.role !== 'admin') {
+      setErrorMsg('Akses Ditolak: Hanya Admin yang dapat membuat temuan Close / Selesai. Akun Anda saat ini adalah Anggota.');
+      if (onRequireAdmin) {
+        onRequireAdmin('Hanya Admin yang berwenang menutup temuan.');
+      }
+      return;
+    }
+
+    setErrorMsg('');
     setStatus(newStatus);
     if (newStatus === 'Closed') {
       if (!closeDate) {
@@ -173,6 +196,15 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
   // Submit form
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Guard: Admin authorization check for closing findings
+    if (status === 'Closed' && currentUser && currentUser.role !== 'admin') {
+      setErrorMsg('Akses Ditolak: Hanya Admin yang dapat membuat temuan berstatus Closed. Silakan pilih Open atau In Progress.');
+      if (onRequireAdmin) {
+        onRequireAdmin('Hanya Admin yang berwenang menutup temuan.');
+      }
+      return;
+    }
 
     if (!area.trim()) {
       setErrorMsg('Area (Lokasi / Lini Kerja) wajib diisi.');
@@ -201,6 +233,7 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
 
     const payload: InspectionFinding = {
       id: initialData?.id || `FND-2026-${Math.floor(100 + Math.random() * 900)}`,
+      factory,
       date,
       area: area.trim(),
       finding: findingText.trim(),
@@ -242,9 +275,12 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-100 bg-slate-50">
           <div>
-            <div className="flex items-center gap-2 mb-0.5">
+            <div className="flex flex-wrap items-center gap-2 mb-0.5">
               <span className="text-[10px] font-bold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded border border-amber-200 uppercase tracking-wider">
                 {isEditing ? `Edit & Pembaruan Temuan: ${initialData?.id} / (Edit Finding)` : 'Pencatatan Temuan Baru / (New Finding Record)'}
+              </span>
+              <span className="text-[10px] font-extrabold text-amber-950 bg-amber-200/90 px-2 py-0.5 rounded border border-amber-300 uppercase tracking-wider">
+                Hirarki: BI MONTHLY (Adidas)
               </span>
               {isEditing && (
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
@@ -330,6 +366,10 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
+                    <span className="font-extrabold text-amber-950 bg-amber-200/90 border border-amber-300 px-1.5 py-0.2 rounded text-[10px] tracking-wide">
+                      {factory}
+                    </span>
+                    <span>&bull;</span>
                     <span className="font-semibold text-slate-800">{area}</span>
                     <span>&bull;</span>
                     <span className="text-amber-700 font-medium">{category}</span>
@@ -411,17 +451,46 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleStatusChange('Closed')}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                      status === 'Closed'
-                        ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/30 text-emerald-950 font-bold'
-                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      currentUser && currentUser.role !== 'admin'
+                        ? 'bg-slate-100/90 border-slate-200 text-slate-400 cursor-not-allowed'
+                        : status === 'Closed'
+                        ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/30 text-emerald-950 font-bold cursor-pointer'
+                        : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 cursor-pointer'
                     }`}
+                    title={
+                      currentUser && currentUser.role !== 'admin'
+                        ? 'Hanya Admin yang berwenang menutup temuan (Closed)'
+                        : 'Tandai temuan Closed (100% Selesai)'
+                    }
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-bold text-emerald-800">🟢 Closed / (Selesai)</span>
+                      <span className={`text-xs font-bold ${
+                        currentUser && currentUser.role !== 'admin' 
+                          ? 'text-slate-500 flex items-center gap-1' 
+                          : 'text-emerald-800'
+                      }`}>
+                        {currentUser && currentUser.role !== 'admin' ? (
+                          <>
+                            <Lock className="w-3 h-3 text-rose-500" />
+                            <span>Closed (Khusus Admin)</span>
+                          </>
+                        ) : (
+                          '🟢 Closed / (Selesai)'
+                        )}
+                      </span>
                       {status === 'Closed' && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                      {currentUser && currentUser.role !== 'admin' && (
+                        <span className="text-[9px] font-black uppercase px-1 py-0.2 rounded bg-rose-100 text-rose-700">
+                          Terkunci
+                        </span>
+                      )}
                     </div>
-                    <p className="text-[10px] text-slate-500 font-normal">Selesai 100% / (Resolved)</p>
+                    <p className="text-[10px] text-slate-500 font-normal">
+                      {currentUser && currentUser.role !== 'admin'
+                        ? 'Hanya akun Admin yang dapat menutup temuan'
+                        : 'Selesai 100% / (Resolved)'}
+                    </p>
                   </button>
                 </div>
               </div>
@@ -665,6 +734,50 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
           {/* SECTION B: DETAIL TEMUAN LAPANGAN (Always shown if !isEditing, or when activeSubTab === 'details') */}
           {(!isEditing || activeSubTab === 'details') && (
             <div className="space-y-5 animate-in fade-in duration-200">
+              {/* Pertanyaan Awal: Factory (3 Option Boxes: AOI 1, AOI 2, AOI 3) */}
+              <div id="factory-selection-group" className="p-4 bg-gradient-to-r from-amber-50/70 via-slate-50 to-white rounded-2xl border border-amber-200 shadow-2xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>Factory <span className="text-rose-500">*</span></span>
+                  </label>
+                  <span className="text-[11px] text-slate-500 font-medium">Pilih salah satu unit pabrik / factory</span>
+                </div>
+
+                {/* 3 Option Boxes */}
+                <div className="grid grid-cols-3 gap-3">
+                  {(['AOI 1', 'AOI 2', 'AOI 3'] as const).map((opt) => {
+                    const isSelected = factory === opt;
+                    return (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setFactory(opt)}
+                        className={`p-3.5 rounded-xl border-2 transition-all cursor-pointer flex flex-col items-center justify-center gap-1 text-center relative ${
+                          isSelected
+                            ? 'bg-amber-400 border-amber-500 text-slate-950 font-black shadow-sm ring-2 ring-amber-400/30'
+                            : 'bg-white border-slate-200 text-slate-700 hover:border-amber-300 hover:bg-slate-50 font-bold'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-sm ${isSelected ? 'font-black text-slate-950' : 'text-slate-800'}`}>
+                            {opt}
+                          </span>
+                          {isSelected && (
+                            <span className="w-4 h-4 rounded-full bg-slate-950 text-white flex items-center justify-center text-[10px] shrink-0">
+                              <Check className="w-2.5 h-2.5 stroke-[3]" />
+                            </span>
+                          )}
+                        </div>
+                        <span className={`text-[10px] ${isSelected ? 'text-slate-900/80 font-semibold' : 'text-slate-400 font-normal'}`}>
+                          {opt === 'AOI 1' ? 'Factory Unit 1' : opt === 'AOI 2' ? 'Factory Unit 2' : 'Factory Unit 3'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Row 1: 1. Date & 2. Area */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -854,8 +967,16 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
                         <option value="Open">🔴 Belum Dikerjakan / (Open)</option>
                         <option value="In Progress">🟡 Sedang Dikerjakan / (In Progress)</option>
                         <option value="Pending Verification">🔵 Menunggu Verifikasi / (Pending Verification)</option>
-                        <option value="Closed">🟢 Selesai / (Closed)</option>
+                        <option value="Closed" disabled={currentUser?.role !== 'admin'}>
+                          🟢 Selesai / (Closed) {currentUser?.role !== 'admin' ? '🔒 (Khusus Admin)' : ''}
+                        </option>
                       </select>
+                      {currentUser && currentUser.role !== 'admin' && (
+                        <p className="text-[10px] text-amber-700 font-medium mt-1 flex items-center gap-1">
+                          <Lock className="w-3 h-3 text-amber-600" />
+                          <span>Status Closed hanya dapat dipilih oleh Admin setelah verifikasi lapangan.</span>
+                        </p>
+                      )}
                     </div>
 
                     <div>

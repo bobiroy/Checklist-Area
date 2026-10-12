@@ -16,6 +16,24 @@ export type GenbaHierarchyLevel =
   | 'cross-check'  // CROSS CHECK GENBA MANAGEMENT - Monthly Genba internal Operation Excellence
   | 'daily-genba'; // DAILY GENBA (SHOPFLOOR MANAGEMENT) - GL & Supervisor Genba everyday on site
 
+export type FactoryOption = 'AOI 1' | 'AOI 2' | 'AOI 3';
+
+export type AssessorRoleGroup = 'Facilitator' | 'PIC Area' | 'Assessors';
+
+export interface BiMonthlyAssessor {
+  id: string;
+  group: AssessorRoleGroup;
+  name: string;
+  title: string;
+  area: string;
+  department: string;
+  mandatoryStatus: 'Wajib Hadir (Mandatory)' | 'Standby di Area' | 'Lead Facilitator';
+  attendanceConfirmed?: boolean;
+  notes?: string;
+  email?: string;
+  phone?: string;
+}
+
 export interface GenbaHierarchyTier {
   id: GenbaHierarchyLevel;
   levelNumber: number; // 1 (Apex), 2, 3, 4 (Base)
@@ -60,6 +78,7 @@ export interface GenbaWalkthroughSession {
 
 export interface InspectionFinding {
   id: string;
+  factory?: FactoryOption; // Factory unit: 'AOI 1' | 'AOI 2' | 'AOI 3'
   date: string; // YYYY-MM-DD
   area: string; // e.g. "Stamping Line A", "Assembly Line 2"
   finding: string; // Deskripsi temuan
@@ -160,6 +179,19 @@ export interface WeeklyReportSummary {
 
 export type ActiveTab = 
   | 'dashboard'
+  | 'factory-dashboard'
   | 'leadership-walkthrough'
-  | 'weekly-logs'
   | 'management-structure';
+
+export type UserRole = 'admin' | 'anggota';
+
+export interface UserAccount {
+  id: string;
+  username: string;
+  name: string;
+  role: UserRole;
+  title: string;
+  department: string;
+  email?: string;
+}
+
