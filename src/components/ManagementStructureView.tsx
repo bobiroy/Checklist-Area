@@ -68,14 +68,23 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
               ...t,
               id: 'bi-monthly' as GenbaHierarchyLevel,
               name: 'BI MONTHLY',
+              picLeader: 'Operation Excellence',
+              participants: '1. Adidas Representative, 2. AOI Team Representative',
+              targetArea: '1. Warehouse, 2. Cutting, 3. Distribusi, 4. Sewing, 5. Warehouse Finish Good',
+              kpiTarget: 'Closing all finding with PICA and maintaining 6S + Safety',
               frequency: 'Bi-Monthly (Setiap 2 Bulan Sekali)',
               frequencyCode: 'Bi-Monthly' as const,
               description: 'Inspeksi tingkat tertinggi bersama perwakilan & auditor brand Adidas setiap dua bulan sekali (Bi-Monthly). Memastikan kepatuhan standar global kualitas garmen, etika ketenagakerjaan, keselamatan kerja (EHS), dan keberlanjutan proses produksi ekspor.',
               objectives: [
-                currentObjs[0] || GENBA_HIERARCHY_TIERS[0].objectives[0],
-                currentObjs[1] || GENBA_HIERARCHY_TIERS[0].objectives[1],
+                'Melakukan Inspeksi di diarea produksi untuk melihat kondisi dilapangan secara langsung',
+                'Mencatat seluruh hasil temuan agar terdata dan terstruktur',
                 'Evaluasi temuan akan 5R dan Melakukan perbaikan atas hasil temuan dengan menelusuri latar belakang temuan dan cara penyelesaian',
                 'Review dan melanjutkan Continuous Improvement pada seluruh area'
+              ],
+              standardChecklist: [
+                'Potensi Safety STOP 6 mulai dari Apparatus, Big, Car, Drop, Electricity, Fire',
+                'Framework 6S yaitu Sort,Set in order, Shine, Standarize, Sustain, Safety',
+                'Potensi temuan ergonomy diarea kerja'
               ]
             };
           }
@@ -569,18 +578,19 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                 <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1 mb-1">
                   <User className="w-3.5 h-3.5 text-blue-600" />
-                  Pimpinan Walkthrough (Lead):
+                  Fasilitator
                 </span>
-                <p className="text-xs font-bold text-slate-900">{activeTier.picLeader}</p>
+                <p className="text-xs font-bold text-slate-900">Operation Excellence</p>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                 <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1 mb-1">
                   <Users className="w-3.5 h-3.5 text-purple-600" />
-                  Tim Peserta / Stakeholders:
+                  Assesor
                 </span>
-                <p className="text-xs font-semibold text-slate-800 truncate" title={activeTier.participants}>
-                  {activeTier.participants}
+                <p className="text-xs font-semibold text-slate-800 leading-snug">
+                  1. Adidas Representative<br />
+                  2. AOI Team Representative
                 </p>
               </div>
 
@@ -589,8 +599,12 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
                   <MapPin className="w-3.5 h-3.5 text-rose-600" />
                   Area Cakupan Utama:
                 </span>
-                <p className="text-xs font-semibold text-slate-800 truncate" title={activeTier.targetArea}>
-                  {activeTier.targetArea}
+                <p className="text-xs font-semibold text-slate-800 leading-snug">
+                  1. Warehouse<br />
+                  2. Cutting<br />
+                  3. Distribusi<br />
+                  4. Sewing<br />
+                  5. Warehouse Finish Good
                 </p>
               </div>
 
@@ -599,7 +613,7 @@ export const ManagementStructureView: React.FC<ManagementStructureViewProps> = (
                   <Target className="w-3.5 h-3.5 text-amber-600" />
                   Target KPI Kepatuhan:
                 </span>
-                <p className="text-xs font-black text-amber-950">{activeTier.kpiTarget}</p>
+                <p className="text-xs font-black text-amber-950 leading-snug">Closing all finding with PICA and maintaining 6S + Safety</p>
               </div>
             </div>
 

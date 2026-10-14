@@ -13,8 +13,6 @@ import {
   CheckCircle2,
   ShieldCheck,
   User,
-  KeyRound,
-  Lock,
   LogOut
 } from 'lucide-react';
 import { ActiveTab, InspectionFinding, UserAccount } from '../types';
@@ -25,7 +23,7 @@ interface HeaderProps {
   onOpenNewFindingModal: () => void;
   findings: InspectionFinding[];
   currentUser: UserAccount;
-  onOpenLoginModal: () => void;
+  onOpenLoginModal?: () => void;
   onLogout?: () => void;
 }
 
@@ -73,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
       {/* Top status bar */}
       <div className="bg-slate-900 text-slate-300 text-xs px-4 sm:px-6 py-1.5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center flex-wrap gap-2.5 sm:gap-4">
+        <div className="flex items-center flex-wrap gap-2.5 sm:gap-3">
           <span className="flex items-center gap-1.5 font-mono text-[11px] text-amber-400 font-semibold shrink-0">
             <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             GENBA MONITORING: ONLINE
@@ -88,51 +86,37 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="font-bold text-amber-300">PT Apparel One Indonesia</span>
           </span>
 
-          {/* User Role Quick Pill in Topbar */}
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={onOpenLoginModal}
-              className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-800/90 hover:bg-slate-700 text-[10px] font-bold border border-slate-700 text-slate-200 transition-colors cursor-pointer"
-              title="Klik untuk membuka Menu Log In"
-            >
-              <Lock className="w-2.5 h-2.5 text-amber-400" />
-              <span>Role:</span>
-              <span className={currentUser.role === 'admin' ? 'text-amber-300 font-extrabold' : 'text-blue-300 font-extrabold'}>
-                {currentUser.role.toUpperCase()}
-              </span>
-              <span className="text-slate-400 font-normal hidden lg:inline">({currentUser.name.split(' ')[0]})</span>
-            </button>
+          <span className="hidden md:inline-block text-slate-600">|</span>
 
-            {onLogout && (
-              <button
-                type="button"
-                onClick={onLogout}
-                className="text-[10px] text-rose-300 hover:text-white flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-rose-900/50 transition-colors cursor-pointer"
-                title="Keluar / Logout dari Sistem"
-              >
-                <LogOut className="w-2.5 h-2.5" />
-                <span className="hidden sm:inline">Keluar</span>
-              </button>
-            )}
+          {/* Realtime KPI Pill badges (Di sebelah tulisan PT Apparel One Indonesia) */}
+          <div className="flex items-center gap-2 text-[11px]">
+            <span className="flex items-center gap-1 text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800/60 font-medium">
+              <AlertCircle className="w-3 h-3" />
+              {openCount} Open
+            </span>
+            <span className="flex items-center gap-1 text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60 font-medium">
+              <TrendingUp className="w-3 h-3" />
+              {inProgressCount} In Progress
+            </span>
+            <span className="flex items-center gap-1 text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 font-medium">
+              <CheckCircle2 className="w-3 h-3" />
+              {closedCount} Closed ({closureRate}%)
+            </span>
           </div>
         </div>
 
-        {/* Realtime KPI Pill badges */}
-        <div className="flex items-center gap-2 sm:gap-3 text-[11px]">
-          <span className="flex items-center gap-1 text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800/60">
-            <AlertCircle className="w-3 h-3" />
-            {openCount} Open
-          </span>
-          <span className="flex items-center gap-1 text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60">
-            <TrendingUp className="w-3 h-3" />
-            {inProgressCount} In Progress
-          </span>
-          <span className="flex items-center gap-1 text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60">
-            <CheckCircle2 className="w-3 h-3" />
-            {closedCount} Closed ({closureRate}%)
-          </span>
-        </div>
+        {/* Exit Button: Pojok Kanan Atas */}
+        {onLogout && (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="text-[11px] font-semibold text-rose-300 hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 hover:border-rose-700 transition-colors cursor-pointer shrink-0 ml-auto"
+            title="Keluar / Logout dari Sistem"
+          >
+            <LogOut className="w-3 h-3" />
+            <span>Keluar</span>
+          </button>
+        )}
       </div>
 
       {/* Main Bar */}
@@ -164,19 +148,15 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Quick Action Buttons: Menu Login + Catat Temuan Baru */}
+          {/* Quick Action Buttons: Status Akun & Catat Temuan Baru */}
           <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* MENU LOG IN & USER STATUS */}
-            <button
-              id="header-login-menu-btn"
-              type="button"
-              onClick={onOpenLoginModal}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all cursor-pointer shadow-2xs group ${
+            {/* Status Pengguna Aktif (Informasi Akun Non-Interactive) */}
+            <div
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border shadow-2xs select-none ${
                 currentUser.role === 'admin'
-                  ? 'bg-gradient-to-r from-amber-50 to-amber-100/70 border-amber-300 text-amber-950 hover:border-amber-400 hover:shadow-xs'
-                  : 'bg-gradient-to-r from-blue-50 to-blue-100/70 border-blue-300 text-blue-950 hover:border-blue-400 hover:shadow-xs'
+                  ? 'bg-amber-50/90 border-amber-300 text-amber-950'
+                  : 'bg-blue-50/90 border-blue-300 text-blue-950'
               }`}
-              title="Menu Log In: Ganti peran Admin atau Anggota"
             >
               <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
                 currentUser.role === 'admin' 
@@ -191,28 +171,15 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
 
               <div className="text-left hidden sm:block">
-                <div className="flex items-center gap-1.5">
-                  <span className={`text-[10px] uppercase font-black tracking-wider px-1 py-0.2 rounded ${
-                    currentUser.role === 'admin'
-                      ? 'bg-amber-200 text-amber-950'
-                      : 'bg-blue-200 text-blue-950'
-                  }`}>
-                    {currentUser.role === 'admin' ? 'ADMIN' : 'ANGGOTA'}
-                  </span>
-                  <span className="text-[10px] text-slate-500 font-semibold truncate max-w-[90px]">
-                    {currentUser.username}
-                  </span>
-                </div>
-                <p className="text-[11px] font-bold text-slate-800 leading-tight truncate max-w-[130px]">
-                  {currentUser.role === 'admin' ? 'Bisa Close Temuan' : 'Khusus Open/Proses'}
-                </p>
+                <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                  currentUser.role === 'admin'
+                    ? 'bg-amber-200 text-amber-950'
+                    : 'bg-blue-200 text-blue-950'
+                }`}>
+                  Role: {currentUser.role === 'admin' ? 'Admin' : 'Member'}
+                </span>
               </div>
-
-              <div className="border-l border-slate-300/80 pl-2 ml-0.5 text-xs font-bold text-amber-800 group-hover:text-amber-950 flex items-center gap-1">
-                <KeyRound className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                <span className="text-[11px] font-black uppercase">Menu Log In</span>
-              </div>
-            </button>
+            </div>
 
             {/* Catat Temuan Baru Button */}
             <button
@@ -286,41 +253,6 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Management Structure</span>
           </button>
 
-          {/* Nav Right Menu Log In Quick Link & Logout */}
-          <div className="ml-auto flex items-center gap-1.5 pl-2">
-            <button
-              id="nav-btn-login-menu"
-              type="button"
-              onClick={onOpenLoginModal}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold border transition-all cursor-pointer whitespace-nowrap shadow-2xs ${
-                currentUser.role === 'admin'
-                  ? 'bg-amber-50 hover:bg-amber-100 text-amber-950 border-amber-300'
-                  : 'bg-blue-50 hover:bg-blue-100 text-blue-950 border-blue-300'
-              }`}
-              title="Buka Menu Log In untuk verifikasi & ubah role"
-            >
-              <KeyRound className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-              <span>Ganti Akun:</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono font-black ${
-                currentUser.role === 'admin' ? 'bg-amber-200 text-amber-950' : 'bg-blue-200 text-blue-950'
-              }`}>
-                {currentUser.role.toUpperCase()}
-              </span>
-            </button>
-
-            {onLogout && (
-              <button
-                id="nav-btn-logout"
-                type="button"
-                onClick={onLogout}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
-                title="Keluar dari sistem (kembali ke layar login)"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Keluar</span>
-              </button>
-            )}
-          </div>
         </nav>
       </div>
     </header>

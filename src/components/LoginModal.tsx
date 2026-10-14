@@ -51,7 +51,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     );
 
     if (matched) {
-      setSuccessMsg(`Berhasil login sebagai ${matched.account.role === 'admin' ? 'ADMIN' : 'ANGGOTA'}: ${matched.account.name}`);
+      setSuccessMsg(`Berhasil login sebagai ${matched.account.role === 'admin' ? 'ADMIN' : 'MEMBER'}.`);
       setTimeout(() => {
         onLogin(matched.account);
         setSuccessMsg('');
@@ -112,10 +112,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                       : 'bg-blue-400 text-slate-950 font-black'
                   }`}>
                     {currentUser.role === 'admin' ? <ShieldCheck className="w-3.5 h-3.5 text-slate-950" /> : <User className="w-3.5 h-3.5 text-slate-950" />}
-                    {currentUser.role.toUpperCase()}
-                  </span>
-                  <span className="text-slate-300 font-semibold text-[11px] truncate max-w-[170px]">
-                    {currentUser.name}
+                    ROLE: {currentUser.role === 'admin' ? 'ADMIN' : 'MEMBER'}
                   </span>
                 </>
               ) : (
@@ -200,7 +197,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   <span>2. Role: Anggota</span>
                 </span>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-300">
-                  Member / Inspector
+                  Member
                 </span>
               </div>
               <ul className="space-y-1 text-[11px] text-slate-600">

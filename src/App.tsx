@@ -122,7 +122,7 @@ export default function App() {
     } catch {
       // ignore
     }
-    showToast(`Berhasil masuk sebagai ${account.role === 'admin' ? 'ADMIN' : 'ANGGOTA'}: ${account.name}`);
+    showToast(`Berhasil masuk sebagai ${account.role === 'admin' ? 'ADMIN' : 'MEMBER'}.`);
   };
 
   const handleLogout = () => {

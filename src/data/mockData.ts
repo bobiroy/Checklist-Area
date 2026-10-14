@@ -392,9 +392,9 @@ export const GENBA_HIERARCHY_TIERS: GenbaHierarchyTier[] = [
     description: 'Inspeksi tingkat tertinggi bersama perwakilan & auditor brand Adidas setiap dua bulan sekali (Bi-Monthly). Memastikan kepatuhan standar global kualitas garmen, etika ketenagakerjaan, keselamatan kerja (EHS), dan keberlanjutan proses produksi ekspor.',
     frequency: 'Bi-Monthly (Setiap 2 Bulan Sekali)',
     frequencyCode: 'Bi-Monthly',
-    participants: 'Adidas Brand Representative, Country Quality Auditor, Plant General Manager, Head of QA, EHS Lead',
+    participants: '1. Adidas Representative, 2. AOI Team Representative',
     leadRole: 'Plant General Manager & Adidas Brand Quality Lead',
-    targetArea: 'Dedicated Adidas Sewing Lines, Final QC Gate, Packaging, Chemical Storage, Finished Goods Warehouse',
+    targetArea: '1. Warehouse, 2. Cutting, 3. Distribusi, 4. Sewing, 5. Warehouse Finish Good',
     iconType: 'calendar',
     colors: {
       gradient: 'from-amber-500 via-amber-400 to-yellow-500',
@@ -406,20 +406,18 @@ export const GENBA_HIERARCHY_TIERS: GenbaHierarchyTier[] = [
       pyramidHover: 'hover:from-amber-200 hover:to-amber-400'
     },
     objectives: [
-      'Verifikasi kepatuhan standar teknis kualitas jahitan & material apparel Adidas (A-01 Standard)',
-      'Audit kepatuhan etika keselamatan kerja & lingkungan (EHS Brand Compliance)',
+      'Melakukan Inspeksi di diarea produksi untuk melihat kondisi dilapangan secara langsung',
+      'Mencatat seluruh hasil temuan agar terdata dan terstruktur',
       'Evaluasi temuan akan 5R dan Melakukan perbaikan atas hasil temuan dengan menelusuri latar belakang temuan dan cara penyelesaian',
       'Review dan melanjutkan Continuous Improvement pada seluruh area'
     ],
     standardChecklist: [
-      'Kalibrasi & log 9-point needle detector (deteksi jarum patah) 100% tervalidasi',
-      'Kerapian dan pelabelan lot potong bahan (fabric batch matching & shading)',
-      'Standar pencahayaan inspection table (minimal 1000 - 1200 Lux)',
-      'Poka-yoke tension benang & penguncian jahitan (sewing seam strength & density)',
-      'B3 & Chemical compliance (MSDS terpasang, spill kit siap pakai di area cetak/sablon)'
+      'Potensi Safety STOP 6 mulai dari Apparatus, Big, Car, Drop, Electricity, Fire',
+      'Framework 6S yaitu Sort,Set in order, Shine, Standarize, Sustain, Safety',
+      'Potensi temuan ergonomy diarea kerja'
     ],
-    kpiTarget: 'Audit Score ≥ 95%, Zero High Risk Non-Compliance, 100% On-Time Shipment',
-    picLeader: 'Ir. Hendra Gunawan (Plant GM) & Adidas QA Lead'
+    kpiTarget: 'Closing all finding with PICA and maintaining 6S + Safety',
+    picLeader: 'Operation Excellence'
   },
   {
     id: 'bod-genba',

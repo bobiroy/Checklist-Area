@@ -499,7 +499,7 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-              {selectedFactoryInfo.description} &bull; <strong className="text-white font-semibold">Koordinator:</strong> {selectedFactoryInfo.leadCoordinator}
+              {selectedFactoryInfo.description}
             </p>
           </div>
 

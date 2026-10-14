@@ -64,7 +64,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
           item.correctiveAction.toLowerCase().includes(q) ||
           item.category.toLowerCase().includes(q) ||
           (item.recordedBy && item.recordedBy.toLowerCase().includes(q)) ||
-          item.inspectorName.toLowerCase().includes(q);
+          Boolean(item.inspectorName && item.inspectorName.toLowerCase().includes(q));
         if (!matchText) return false;
       }
 
@@ -113,8 +113,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
       '9. Close Date',
       '10. Attachment URL',
       'Department',
-      'Priority',
-      'Inspector (Pimpinan)'
+      'Priority'
     ];
 
     const rows = filteredFindings.map((f) => [
@@ -122,7 +121,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
       `"${f.factory || 'AOI 1'}"`,
       `"${f.date}"`,
       `"${f.area}"`,
-      `"${(f.recordedBy || f.inspectorName).replace(/"/g, '""')}"`,
+      `"${(f.recordedBy || 'Assessor Genba').replace(/"/g, '""')}"`,
       `"${f.finding.replace(/"/g, '""')}"`,
       `"${f.category}"`,
       `"${f.pic.replace(/"/g, '""')}"`,
@@ -131,8 +130,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
       `"${f.closeDate || ''}"`,
       `"${f.attachmentUrl}"`,
       `"${f.department}"`,
-      `"${f.priority}"`,
-      `"${f.inspectorName}"`
+      `"${f.priority}"`
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
@@ -174,17 +172,14 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* User Role Authority Badge */}
+          {/* User Role Authority Badge (Static) */}
           {currentUser && (
-            <button
-              type="button"
-              onClick={onOpenLoginModal ? () => onOpenLoginModal() : undefined}
-              className={`no-print px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs border transition-all cursor-pointer ${
+            <div
+              className={`no-print px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs border select-none ${
                 currentUser.role === 'admin'
-                  ? 'bg-amber-50 hover:bg-amber-100 text-amber-950 border-amber-300'
-                  : 'bg-blue-50 hover:bg-blue-100 text-blue-950 border-blue-300'
+                  ? 'bg-amber-50 text-amber-950 border-amber-300'
+                  : 'bg-blue-50 text-blue-950 border-blue-300'
               }`}
-              title="Klik untuk membuka Menu Log In"
             >
               {currentUser.role === 'admin' ? (
                 <>
@@ -197,7 +192,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
                   <span>Anggota: Hanya Admin Berhak Close</span>
                 </>
               )}
-            </button>
+            </div>
           )}
 
           {/* Audit Protection Notice: Temuan bersifat permanen dan tidak dapat dihapus */}
@@ -476,9 +471,6 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
                               ⚠️ Kritis / Bahaya
                             </span>
                           )}
-                          <p className="text-[10px] text-slate-400 mt-1">
-                            Pimpinan Walk: {item.inspectorName}
-                          </p>
                         </div>
                       </div>
                     </td>

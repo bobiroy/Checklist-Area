@@ -131,7 +131,7 @@ export const EditHierarchyTierModal: React.FC<EditHierarchyTierModalProps> = ({
             <div>
               <label className="block font-semibold text-slate-900 mb-1 flex items-center gap-1">
                 <UserCheck className="w-3.5 h-3.5 text-blue-600" />
-                Penanggung Jawab Utama (Lead PIC):
+                Fasilitator (Operation Excellence):
               </label>
               <input
                 type="text"

@@ -210,12 +210,12 @@ export const WalkthroughSessionModal: React.FC<WalkthroughSessionModalProps> = (
             <div>
               <label className="block font-semibold text-slate-900 mb-1 flex items-center gap-1">
                 <User className="w-3.5 h-3.5 text-blue-600" />
-                Pimpinan Walkthrough (Lead Inspector):
+                Fasilitator:
               </label>
               <input
                 type="text"
                 value={leader}
-                placeholder={activeTier.picLeader}
+                placeholder="Operation Excellence"
                 onChange={(e) => setLeader(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-amber-500"
               />

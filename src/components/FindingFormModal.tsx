@@ -3,7 +3,6 @@ import {
   X, 
   Upload, 
   Image as ImageIcon, 
-  Sparkles, 
   Check, 
   AlertCircle, 
   Layers, 
@@ -82,8 +81,6 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
   const [impactScore, setImpactScore] = useState('');
   const [progressNotes, setProgressNotes] = useState('');
 
-  const [showPresetsBefore, setShowPresetsBefore] = useState(false);
-  const [showPresetsAfter, setShowPresetsAfter] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [infoMsg, setInfoMsg] = useState('');
 
@@ -97,7 +94,7 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
         setFindingText(initialData.finding || '');
         setCategory(initialData.category || '5R');
         setRecordedBy(initialData.recordedBy || '');
-        setInspectorName(initialData.inspectorName || 'Bpk. Ir. Hendra Gunawan (Plant GM)');
+        setInspectorName(initialData.inspectorName || '');
         setPic(initialData.pic || '');
         setDepartment(initialData.department || DEPARTMENTS[0].name);
         setCorrectiveAction(initialData.correctiveAction || '');
@@ -117,17 +114,16 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
         setFactory(defaultFactory || 'AOI 1');
         setDate(todayStr);
         setArea('');
-        setFindingText('');
         setCategory('5R');
-        setRecordedBy(currentUser ? currentUser.name : '');
-        setInspectorName('Bpk. Ir. Hendra Gunawan (Plant GM)');
+        setRecordedBy('');
+        setInspectorName('');
         setPic('');
         setDepartment(DEPARTMENTS[0].name);
         setCorrectiveAction('');
         setStatus('Open');
         setCloseDate('');
         setTargetDate('');
-        setAttachmentUrl(SAMPLE_PHOTO_PRESETS[1].url);
+        setAttachmentUrl('');
         setAttachmentAfterUrl('');
         setPriority('Medium');
         setHierarchyLevel('bi-monthly');
@@ -137,8 +133,6 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
       }
       setErrorMsg('');
       setInfoMsg('');
-      setShowPresetsBefore(false);
-      setShowPresetsAfter(false);
     }
   }, [isOpen, initialData, currentUser]);
 
@@ -248,7 +242,7 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
       attachmentAfterUrl: attachmentAfterUrl.trim() || undefined,
       priority,
       hierarchyLevel,
-      inspectorName: inspectorName.trim() || 'Tim Genba Walk',
+      inspectorName: inspectorName.trim() || (initialData?.inspectorName || ''),
       recordedBy: recordedBy.trim(),
       weekNumber: initialData?.weekNumber || 38,
       notes: progressNotes.trim() || initialData?.notes || undefined,
@@ -497,57 +491,15 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
 
               {/* Foto Bukti Sesudah Perbaikan (After) - High Priority */}
               <div className="border border-emerald-200 rounded-xl p-4 bg-emerald-50/20 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>Lampiran Foto Bukti Sesudah Perbaikan (After) / (Photo Proof After / Countermeasure)</span>
-                    </label>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      Unggah foto fisik kondisi sesudah perbaikan lapangan selesai / (Upload photo of completed countermeasure).
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowPresetsAfter(!showPresetsAfter)}
-                    className="text-xs font-semibold text-emerald-800 hover:text-emerald-900 flex items-center gap-1 bg-emerald-100/80 hover:bg-emerald-200/80 px-2.5 py-1.5 rounded-lg border border-emerald-300 transition-colors cursor-pointer self-start sm:self-auto"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{showPresetsAfter ? 'Tutup Contoh Foto / (Close Presets)' : 'Pilih Contoh Foto Selesai / (Select Sample After Photo)'}</span>
-                  </button>
+                <div>
+                  <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Lampiran Foto Bukti Sesudah Perbaikan (After) / (Photo Proof After / Countermeasure)</span>
+                  </label>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Unggah foto fisik kondisi sesudah perbaikan lapangan selesai / (Upload photo of completed countermeasure).
+                  </p>
                 </div>
-
-                {/* Presets for After Photos */}
-                {showPresetsAfter && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-3 bg-white rounded-lg border border-emerald-200 animate-in fade-in">
-                    {SAMPLE_PHOTO_PRESETS.filter(p => p.label.includes('(After)')).map((preset, idx) => (
-                      <button
-                        type="button"
-                        key={idx}
-                        onClick={() => {
-                          setAttachmentAfterUrl(preset.url);
-                          setShowPresetsAfter(false);
-                          setInfoMsg('Foto perbaikan berhasil dipilih dari contoh!');
-                          setTimeout(() => setInfoMsg(''), 3000);
-                        }}
-                        className={`text-left p-1.5 rounded-lg border text-xs transition-all overflow-hidden cursor-pointer ${
-                          attachmentAfterUrl === preset.url
-                            ? 'border-emerald-600 ring-2 ring-emerald-500/20 bg-emerald-50'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <img
-                          src={preset.url}
-                          alt={preset.label}
-                          className="w-full h-16 object-cover rounded mb-1"
-                          referrerPolicy="no-referrer"
-                        />
-                        <p className="font-semibold text-slate-800 text-[11px] truncate">{preset.label}</p>
-                      </button>
-                    ))}
-                  </div>
-                )}
 
                 {/* Side-by-Side: Foto Before vs Foto After */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
@@ -693,8 +645,8 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
                 </div>
               </div>
 
-              {/* Tanggal Selesai & Dampak */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              {/* Tanggal Selesai */}
+              <div className="pt-1">
                 <div>
                   <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
                     <span>Tanggal Penyelesaian Aktual / (Actual Close Date)</span>
@@ -710,20 +662,6 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
                     type="date"
                     value={closeDate}
                     onChange={(e) => setCloseDate(e.target.value)}
-                    className="w-full px-3.5 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
-                    <span>Estimasi Dampak &amp; Manfaat Kaizen / (Estimated Impact &amp; Kaizen Benefit)</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Opsional / (Optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={impactScore}
-                    onChange={(e) => setImpactScore(e.target.value)}
-                    placeholder="Contoh: Eliminasi risiko sengatan listrik, 100% aman"
                     className="w-full px-3.5 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white"
                   />
                 </div>
@@ -811,45 +749,25 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
                 </div>
               </div>
 
-              {/* Row 2: 3. Assessor & Pimpinan Inspektur */}
+              {/* Row 2: 3. Assessor */}
               <div className="p-3.5 bg-amber-50/50 rounded-xl border border-amber-200/80">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
-                      <UserCheck className="w-4 h-4 text-amber-600 shrink-0" />
-                      <span>3. Penilai / Assessor (User Penginput) / (Assessor / User Input) <span className="text-rose-500">*</span></span>
-                    </label>
-                    <input
-                      id="input-finding-recorded-by"
-                      type="text"
-                      value={recordedBy}
-                      onChange={(e) => setRecordedBy(e.target.value)}
-                      placeholder="Ketik nama Anda (contoh: Budi Santoso - CI Staff / Notulen Genba)..."
-                      required
-                      className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white placeholder:text-slate-400"
-                    />
-                    <p className="text-[11px] text-slate-500 mt-1">
-                      Nama personel yang mencatat temuan ini saat inspeksi lapangan / (Person who records finding).
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
-                      <User className="w-4 h-4 text-slate-600 shrink-0" />
-                      <span>Inspektur &amp; Pimpinan Genba Walk / (Inspector &amp; Genba Walk Leader)</span>
-                    </label>
-                    <input
-                      id="input-finding-inspector"
-                      type="text"
-                      value={inspectorName}
-                      onChange={(e) => setInspectorName(e.target.value)}
-                      placeholder="Contoh: Bpk. Ir. Hendra Gunawan (Plant GM)..."
-                      className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white placeholder:text-slate-400"
-                    />
-                    <p className="text-[11px] text-slate-500 mt-1">
-                      Pimpinan yang memimpin sesi walkthrough Genba / (Leader of walkthrough session).
-                    </p>
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                    <UserCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>3. Penilai / Assessor (User Penginput) / (Assessor / User Input) <span className="text-rose-500">*</span></span>
+                  </label>
+                  <input
+                    id="input-finding-recorded-by"
+                    type="text"
+                    value={recordedBy}
+                    onChange={(e) => setRecordedBy(e.target.value)}
+                    placeholder="Ketik nama Anda (contoh: Budi Santoso - CI Staff / Notulen Genba)..."
+                    required
+                    className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white placeholder:text-slate-400"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Nama personel yang mencatat temuan ini saat inspeksi lapangan / (Person who records finding).
+                  </p>
                 </div>
               </div>
 
@@ -997,49 +915,12 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
 
               {/* Foto Bukti Temuan (Before) */}
               <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-4">
-                <div className="flex items-center justify-between">
+                <div>
                   <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                     <ImageIcon className="w-4 h-4 text-amber-600" />
                     <span>10. Lampiran Foto Bukti Temuan (Before) / (Attachment Photo Proof - Before) <span className="text-rose-500">*</span></span>
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowPresetsBefore(!showPresetsBefore)}
-                    className="text-xs font-semibold text-amber-700 hover:text-amber-800 flex items-center gap-1 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-md border border-amber-200 transition-colors cursor-pointer"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                    <span>{showPresetsBefore ? 'Tutup Contoh Foto / (Close Presets)' : 'Pilih Contoh Foto Temuan / (Select Sample Photo)'}</span>
-                  </button>
                 </div>
-
-                {/* Presets picker */}
-                {showPresetsBefore && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 bg-amber-50/40 rounded-lg border border-amber-100 animate-in fade-in">
-                    {SAMPLE_PHOTO_PRESETS.slice(0, 5).map((preset, idx) => (
-                      <button
-                        type="button"
-                        key={idx}
-                        onClick={() => {
-                          setAttachmentUrl(preset.url);
-                          setShowPresetsBefore(false);
-                        }}
-                        className={`text-left p-1.5 rounded-lg border text-xs transition-all overflow-hidden cursor-pointer ${
-                          attachmentUrl === preset.url
-                            ? 'border-amber-600 ring-2 ring-amber-500/20 bg-amber-50'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <img
-                          src={preset.url}
-                          alt={preset.label}
-                          className="w-full h-16 object-cover rounded mb-1"
-                          referrerPolicy="no-referrer"
-                        />
-                        <p className="font-semibold text-slate-800 text-[11px] truncate">{preset.label}</p>
-                      </button>
-                    ))}
-                  </div>
-                )}
 
                 {/* Input file & preview for Before Photo */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
@@ -1088,35 +969,20 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
               </div>
 
               {/* Priority & Severity */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    11. Tingkat Prioritas &amp; Keparahan / (Priority Level &amp; Severity)
-                  </label>
-                  <select
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value as PriorityLevel)}
-                    className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white"
-                  >
-                    <option value="Low">Rendah / (Low - Kosmetik / Non-kritis)</option>
-                    <option value="Medium">Sedang / (Medium - Kepatuhan 5S)</option>
-                    <option value="High">Tinggi / (High - Potensi Cacat / Downtime)</option>
-                    <option value="Critical">Kritis / (Critical - Bahaya K3 &amp; Keselamatan)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    12. Estimasi Dampak &amp; Manfaat Kaizen / (Estimated Impact &amp; Kaizen Benefit)
-                  </label>
-                  <input
-                    type="text"
-                    value={impactScore}
-                    onChange={(e) => setImpactScore(e.target.value)}
-                    placeholder="Contoh: Menghemat cycle time 4.2s / Eliminasi bahaya slip"
-                    className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  11. Tingkat Prioritas &amp; Keparahan / (Priority Level &amp; Severity)
+                </label>
+                <select
+                  value={priority}
+                  onChange={(e) => setPriority(e.target.value as PriorityLevel)}
+                  className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white"
+                >
+                  <option value="Low">Rendah / (Low - Kosmetik / Non-kritis)</option>
+                  <option value="Medium">Sedang / (Medium - Kepatuhan 5S)</option>
+                  <option value="High">Tinggi / (High - Potensi Cacat / Downtime)</option>
+                  <option value="Critical">Kritis / (Critical - Bahaya K3 &amp; Keselamatan)</option>
+                </select>
               </div>
             </div>
           )}
@@ -1124,10 +990,8 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
           {/* Form Actions Footer */}
           <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-xs text-slate-500">
-              {isEditing ? (
+              {isEditing && (
                 <span>Mengedit temuan <strong className="text-slate-800">{initialData?.id}</strong></span>
-              ) : (
-                <span>Form standar pencatatan Genba Walk ISO 9001</span>
               )}
             </div>
 

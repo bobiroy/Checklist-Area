@@ -9,8 +9,7 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Factory, 
-  ArrowRight, 
-  LockKeyhole
+  ArrowRight
 } from 'lucide-react';
 import { UserAccount } from '../types';
 import { verifyCredentials } from '../data/mockData';
@@ -41,11 +40,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
     if (result.success && result.account) {
       const user = result.account;
-      setSuccessInfo(`Kredensial terverifikasi! Selamat datang, ${user.name} (${user.role === 'admin' ? 'ADMIN' : 'ANGGOTA'}).`);
+      setSuccessInfo(`Kredensial terverifikasi! Masuk sebagai ${user.role === 'admin' ? 'ADMIN' : 'MEMBER'}.`);
       setTimeout(() => {
         setIsSubmitting(false);
         onLoginSuccess(user);
-      }, 600);
+      }, 500);
     } else {
       setTimeout(() => {
         setIsSubmitting(false);
@@ -75,10 +74,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-2 text-xs text-slate-400">
-          <LockKeyhole className="w-3.5 h-3.5 text-amber-400" />
-          <span>Layer 1: Autentikasi Pengguna &amp; Pembagian Wewenang</span>
-        </div>
       </header>
 
       {/* Main Login Area - Centered of the page */}
@@ -225,8 +220,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               </div>
             </div>
 
-            <div className="pt-4 mt-4 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between">
-              <span>Keamanan Standar Industri 4.0</span>
+            <div className="pt-4 mt-4 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-center text-center">
               <span>Continuous Improvement Genba Kaizen</span>
             </div>
           </div>

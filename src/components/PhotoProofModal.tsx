@@ -282,16 +282,10 @@ export const PhotoProofModal: React.FC<PhotoProofModalProps> = ({
         {/* Footer */}
         <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span>
-              Inspektor: <span className="font-semibold text-slate-700">{finding.inspectorName}</span>
-            </span>
             {finding.recordedBy && (
-              <>
-                <span className="text-slate-300">&bull;</span>
-                <span>
-                  Diinput Oleh: <span className="font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{finding.recordedBy}</span>
-                </span>
-              </>
+              <span>
+                Diinput Oleh: <span className="font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{finding.recordedBy}</span>
+              </span>
             )}
           </div>
 
