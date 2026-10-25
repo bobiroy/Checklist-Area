@@ -16,7 +16,6 @@ import {
   BarChart3,
   Calendar,
   Layers,
-  FileSpreadsheet,
   CheckCircle,
   AlertCircle,
   MapPin,
@@ -26,7 +25,8 @@ import {
   XCircle,
   Compass,
   Lock,
-  ShieldCheck
+  ShieldCheck,
+  UserCheck
 } from 'lucide-react';
 import { 
   InspectionFinding, 
@@ -36,6 +36,7 @@ import {
   UserAccount 
 } from '../types';
 import { FactoryAchievementChart } from './FactoryAchievementChart';
+import { AreaPerformanceDashboard } from './AreaPerformanceDashboard';
 
 interface FactoryDashboardViewProps {
   findings: InspectionFinding[];
@@ -69,7 +70,7 @@ const FACTORY_INFO: Record<FactoryOption, {
     fullName: 'PT Apparel One Indonesia - Factory AOI 1',
     subtitle: 'Main Production & Apparel Hub',
     location: 'Kawasan Berikat Blok A-1, Semarang',
-    description: 'Pusat perakitan garmen utama, lini sewing sportswear, perakitan pakaian ekspor, dan fabric storage warehouse terpusat.',
+    description: 'Genba System for All Production area using 6S and STOP 6 in Apparel One Indonesia for continuous Improvement',
     leadCoordinator: 'Bpk. Ir. Hendra Gunawan (Plant GM - AOI 1)',
     accentBg: 'bg-amber-500',
     accentText: 'text-amber-800',
@@ -84,7 +85,7 @@ const FACTORY_INFO: Record<FactoryOption, {
     fullName: 'PT Apparel One Indonesia - Factory AOI 2',
     subtitle: 'Cutting & Automated Sewing Center',
     location: 'Kawasan Industri Wijayakusuma Blok B-3, Semarang',
-    description: 'Fasilitas pemotongan kain presisi CNC & laser cutter, tensionless fabric spreading, sub-assembly, serta bordir otomatis.',
+    description: 'Genba System for All Production area using 6S and STOP 6 in Apparel One Indonesia for continuous Improvement',
     leadCoordinator: 'Bpk. Ir. Rahmat Hidayat (Operations Head - AOI 2)',
     accentBg: 'bg-blue-600',
     accentText: 'text-blue-800',
@@ -99,7 +100,7 @@ const FACTORY_INFO: Record<FactoryOption, {
     fullName: 'PT Apparel One Indonesia - Factory AOI 3',
     subtitle: 'Finishing, QA & Logistics Fulfillment',
     location: 'Kawasan Industri Terboyo Mega Megah Blok C-5, Semarang',
-    description: 'Pusat finishing steam press, inspeksi mutu QC audit buyer Adidas, metal detector needle scan, dan export fulfillment packing.',
+    description: 'Genba System for All Production area using 6S and STOP 6 in Apparel One Indonesia for continuous Improvement',
     leadCoordinator: 'Ibu Anita Wijaya, S.E. (Logistics & QA Lead - AOI 3)',
     accentBg: 'bg-emerald-600',
     accentText: 'text-emerald-800',
@@ -124,7 +125,7 @@ const DEPARTMENTS_LIST = [
   'Cutting',
   'Distribusi',
   'Sewing',
-  'Finishing Packing'
+  'Finish Good'
 ];
 
 export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
@@ -214,7 +215,12 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
       departmentCounts[d] = { total: 0, closed: 0 };
     });
     facFindings.forEach((f) => {
-      const dept = f.department || 'Warehouse';
+      let dept = f.department || 'Warehouse';
+      if (dept === 'Finishing Packing' || dept === 'Finishing' || dept === 'Packing') {
+        dept = 'Finish Good';
+      } else if (dept.startsWith('Distribusi')) {
+        dept = 'Distribusi';
+      }
       if (!departmentCounts[dept]) {
         departmentCounts[dept] = { total: 0, closed: 0 };
       }
@@ -299,46 +305,6 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
       return true;
     });
   }, [activeFactoryData.findings, selectedAreaFilter, statusFilter, categoryFilter, searchQuery]);
-
-  // Export CSV for current factory view
-  const handleExportCSV = () => {
-    const headers = [
-      'ID Temuan',
-      'Factory',
-      'Tanggal',
-      'Area',
-      'Deskripsi Temuan',
-      'Kategori',
-      'PIC',
-      'Departemen',
-      'Prioritas',
-      'Status',
-      'Target Selesai'
-    ];
-
-    const rows = tableFindings.map((item) => [
-      `"${item.id}"`,
-      `"${getFindingFactory(item)}"`,
-      `"${item.date}"`,
-      `"${item.area.replace(/"/g, '""')}"`,
-      `"${item.finding.replace(/"/g, '""')}"`,
-      `"${item.category}"`,
-      `"${item.pic.replace(/"/g, '""')}"`,
-      `"${item.department || '-'}"`,
-      `"${item.priority}"`,
-      `"${item.status}"`,
-      `"${item.targetDate || item.closeDate || '-'}"`
-    ]);
-
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(',')).join('\n')];
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Dashboard_Genba_${selectedFactory}_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   const selectedFactoryInfo = FACTORY_INFO[selectedFactory];
 
@@ -514,15 +480,6 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
               <span className="px-1.5 py-0.2 rounded bg-slate-900 text-white text-[11px]">
                 di {selectedFactory}
               </span>
-            </button>
-
-            <button
-              onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-black/40 hover:bg-black/60 text-white font-bold text-xs rounded-xl border border-white/30 backdrop-blur-xs transition-colors cursor-pointer"
-              title="Download rekapan CSV temuan untuk factory ini"
-            >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-              <span>Export CSV ({selectedFactory})</span>
             </button>
           </div>
         </div>
@@ -713,7 +670,20 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
       </div>
 
       {/* ============================================================== */}
-      {/* 5. DIAGRAM BATANG FACTORY DASHBOARD (MENYERUPAI GENBA DASHBOARD) */}
+      {/* 5. PEMANTAUAN HASIL TEMUAN PER AREA & FACTORY                  */}
+      {/* ============================================================== */}
+      <AreaPerformanceDashboard 
+        findings={findings}
+        initialFactory={selectedFactory}
+        onNavigateToTable={(area) => {
+          if (area) {
+            setSelectedAreaFilter(area);
+          }
+        }}
+      />
+
+      {/* ============================================================== */}
+      {/* 6. DIAGRAM BATANG FACTORY DASHBOARD (MENYERUPAI GENBA DASHBOARD) */}
       {/* ============================================================== */}
       <FactoryAchievementChart
         factory={selectedFactory}
@@ -909,11 +879,17 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
                         </div>
                       </td>
 
-                      {/* Finding Description */}
+                      {/* Finding Description & Assessor */}
                       <td className="py-3 px-3.5 align-top max-w-xs">
-                        <p className="text-slate-800 text-xs line-clamp-2 leading-relaxed">
+                        <p className="text-slate-800 text-xs line-clamp-2 leading-relaxed font-medium">
                           {finding.finding}
                         </p>
+                        <div className="flex items-center gap-1.5 mt-1 text-[10px]">
+                          <span className="inline-flex items-center gap-1 font-semibold text-amber-900 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded">
+                            <UserCheck className="w-2.5 h-2.5 text-amber-600" />
+                            Assessor: {finding.inspectorName || finding.recordedBy || 'Assessor Genba'}
+                          </span>
+                        </div>
                         {finding.correctiveAction && (
                           <p className="text-[11px] text-slate-500 mt-1 line-clamp-1 italic">
                             <strong className="not-italic text-slate-700">Tindakan:</strong> {finding.correctiveAction}

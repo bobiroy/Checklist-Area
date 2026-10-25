@@ -109,11 +109,34 @@ export const FactoryAchievementChart: React.FC<FactoryAchievementChartProps> = (
 
   // 2. Data per Departemen di Factory Terpilih
   const deptDataRaw = DEPARTMENTS.map((dept) => {
-    const deptFindings = factoryFindings.filter(
-      (f) =>
-        (f.department || '').toLowerCase().includes(dept.name.toLowerCase()) ||
-        (f.department || '').toLowerCase().includes(dept.code.toLowerCase())
-    );
+    const deptFindings = factoryFindings.filter((f) => {
+      const fDept = (f.department || '').toLowerCase();
+      const fArea = (f.area || '').toLowerCase();
+      const dName = dept.name.toLowerCase();
+      const dCode = dept.code.toLowerCase();
+
+      if (fDept.includes(dName) || fDept.includes(dCode)) return true;
+
+      if (dept.id === 'fp' || dName.includes('finishing')) {
+        return fDept.includes('finish') || fArea.includes('finish') || fDept.includes('pack');
+      }
+      if (dept.id === 'ppa' || dName === 'ppa') {
+        return fDept.includes('ppa') || fArea.includes('ppa');
+      }
+      if (dept.id === 'dist' || dName.includes('distribusi')) {
+        return fDept.includes('distribusi') || fArea.includes('distribusi') || fArea.includes('supermarket') || fArea.includes('heat transfer');
+      }
+      if (dept.id === 'wh' || dName.includes('warehouse')) {
+        return fDept.includes('warehouse') || fArea.includes('warehouse') || fArea.includes('gudang');
+      }
+      if (dept.id === 'cut' || dName.includes('cutting')) {
+        return fDept.includes('cutting') || fArea.includes('cutting') || fArea.includes('potong');
+      }
+      if (dept.id === 'sew' || dName.includes('sewing')) {
+        return fDept.includes('sewing') || fArea.includes('sewing') || fArea.includes('jahit');
+      }
+      return false;
+    });
     const total = deptFindings.length;
     const closed = deptFindings.filter((f) => f.status === 'Closed').length;
     const open = deptFindings.filter((f) => f.status === 'Open').length;

@@ -4,6 +4,7 @@ import { DashboardView } from './components/DashboardView';
 import { InspectionTableView } from './components/InspectionTableView';
 import { ManagementStructureView } from './components/ManagementStructureView';
 import { FactoryDashboardView } from './components/FactoryDashboardView';
+import { ChecksheetView } from './components/ChecksheetView';
 import { FindingFormModal } from './components/FindingFormModal';
 import { PhotoProofModal } from './components/PhotoProofModal';
 import { ResetConfirmModal } from './components/ResetConfirmModal';
@@ -32,9 +33,9 @@ const normalizeDepartment = (dept?: string): string => {
   const d = dept.toLowerCase();
   if (d === 'warehouse' || d.includes('ware') || d.includes('gudang') || d.includes('ppic')) return 'Warehouse';
   if (d === 'cutting' || d.includes('cut') || d.includes('potong')) return 'Cutting';
-  if (d === 'distribusi' || d.includes('distrib') || d.includes('logist') || d.includes('transit')) return 'Distribusi';
+  if (d === 'distribusi' || d.includes('distrib') || d.includes('logist') || d.includes('transit') || d.includes('ppa') || d.includes('supermarket') || d.includes('heat')) return 'Distribusi';
   if (d === 'sewing' || d.includes('sew') || d.includes('jahit') || d.includes('prod') || d.includes('maint')) return 'Sewing';
-  if (d === 'finishing packing' || d.includes('finish') || d.includes('pack') || d.includes('qa') || d.includes('qc') || d.includes('ehs')) return 'Finishing Packing';
+  if (d.includes('finish') || d.includes('fg') || d.includes('good') || d.includes('pack') || d.includes('qa') || d.includes('qc') || d.includes('ehs')) return 'Finish Good';
   return 'Warehouse';
 };
 
@@ -170,8 +171,41 @@ export default function App() {
 
   // Delete finding
   const handleDeleteFinding = (id: string) => {
-    setFindings((prev) => prev.filter((f) => f.id !== id));
+    setFindings((prev) => {
+      const updated = prev.filter((f) => f.id !== id);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
     showToast(`Temuan ${id} telah dihapus.`);
+  };
+
+  // Delete multiple findings
+  const handleDeleteMultipleFindings = (ids: string[]) => {
+    setFindings((prev) => {
+      const updated = prev.filter((f) => !ids.includes(f.id));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
+    });
+    showToast(`${ids.length} temuan berhasil dihapus.`);
+  };
+
+  // Clear all findings
+  const handleClearAllFindings = () => {
+    setFindings([]);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+    } catch {
+      // ignore
+    }
+    showToast('Seluruh temuan pada tabel berhasil dihapus.');
   };
 
   // Quick inline status update
@@ -282,6 +316,16 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'checksheet' && (
+          <ChecksheetView
+            findings={findings}
+            currentUser={currentUser}
+            onSaveFinding={handleSaveFinding}
+            onSelectPhotoProof={(finding) => setPhotoProofFinding(finding)}
+            onGoToInspectionTable={() => setActiveTab('leadership-walkthrough')}
+          />
+        )}
+
         {activeTab === 'leadership-walkthrough' && (
           <InspectionTableView
             findings={findings}
@@ -294,6 +338,8 @@ export default function App() {
               setIsFormModalOpen(true);
             }}
             onDeleteFinding={handleDeleteFinding}
+            onDeleteMultipleFindings={handleDeleteMultipleFindings}
+            onClearAllFindings={handleClearAllFindings}
             onSelectPhotoProof={(finding) => setPhotoProofFinding(finding)}
             onQuickUpdateStatus={handleQuickUpdateStatus}
             currentUser={currentUser}

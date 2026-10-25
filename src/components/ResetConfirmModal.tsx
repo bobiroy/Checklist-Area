@@ -35,7 +35,7 @@ export const ResetConfirmModal: React.FC<ResetConfirmModalProps> = ({
             Reset ke Data Bawaan (Sample Data)?
           </h3>
           <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-            Tindakan ini akan mengembalikan seluruh data temuan ke data contoh default awal pabrik. Perubahan yang belum diekspor ke CSV akan hilang.
+            Tindakan ini akan mengembalikan seluruh data temuan ke data contoh default awal pabrik. Data temuan yang telah dicatat akan diatur ulang.
           </p>
         </div>
 

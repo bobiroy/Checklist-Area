@@ -181,7 +181,8 @@ export type ActiveTab =
   | 'dashboard'
   | 'factory-dashboard'
   | 'leadership-walkthrough'
-  | 'management-structure';
+  | 'management-structure'
+  | 'checksheet';
 
 export type UserRole = 'admin' | 'anggota';
 

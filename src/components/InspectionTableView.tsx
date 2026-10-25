@@ -3,9 +3,9 @@ import {
   Search, 
   Filter, 
   Plus, 
-  Download, 
   Eye, 
   Edit3, 
+  Trash2,
   CheckCircle2, 
   Clock, 
   AlertTriangle,
@@ -13,7 +13,6 @@ import {
   Calendar,
   MapPin,
   Camera,
-  Printer,
   UserCheck,
   ShieldCheck,
   Lock,
@@ -21,12 +20,15 @@ import {
 } from 'lucide-react';
 import { InspectionFinding, FindingCategory, FindingStatus, UserAccount } from '../types';
 import { FACTORY_AREAS, FINDING_CATEGORIES, DEPARTMENTS } from '../data/mockData';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
 
 interface InspectionTableViewProps {
   findings: InspectionFinding[];
   onOpenNewFindingModal: () => void;
   onEditFinding: (finding: InspectionFinding) => void;
   onDeleteFinding?: (id: string) => void;
+  onDeleteMultipleFindings?: (ids: string[]) => void;
+  onClearAllFindings?: () => void;
   onSelectPhotoProof: (finding: InspectionFinding) => void;
   onQuickUpdateStatus: (id: string, newStatus: FindingStatus) => void;
   currentUser?: UserAccount | null;
@@ -37,11 +39,18 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
   findings,
   onOpenNewFindingModal,
   onEditFinding,
+  onDeleteFinding,
+  onDeleteMultipleFindings,
+  onClearAllFindings,
   onSelectPhotoProof,
   onQuickUpdateStatus,
   currentUser,
   onOpenLoginModal
 }) => {
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [findingToDelete, setFindingToDelete] = useState<InspectionFinding | null>(null);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFactory, setSelectedFactory] = useState<string>('ALL');
   const [selectedArea, setSelectedArea] = useState<string>('ALL');
@@ -61,7 +70,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
           item.finding.toLowerCase().includes(q) ||
           item.area.toLowerCase().includes(q) ||
           item.pic.toLowerCase().includes(q) ||
-          item.correctiveAction.toLowerCase().includes(q) ||
+          Boolean(item.correctiveAction && item.correctiveAction.toLowerCase().includes(q)) ||
           item.category.toLowerCase().includes(q) ||
           (item.recordedBy && item.recordedBy.toLowerCase().includes(q)) ||
           Boolean(item.inspectorName && item.inspectorName.toLowerCase().includes(q));
@@ -97,52 +106,6 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
     });
   }, [findings, searchQuery, selectedFactory, selectedArea, selectedCategory, selectedStatus, selectedDept]);
 
-  // Export CSV function
-  const handleExportCSV = () => {
-    const headers = [
-      'ID',
-      'Factory',
-      '1. Date',
-      '2. Area',
-      '3. Assessor (Penginput)',
-      '4. Finding',
-      '5. Category',
-      '6. PIC',
-      '7. Corrective Action',
-      '8. Status',
-      '9. Close Date',
-      '10. Attachment URL',
-      'Department',
-      'Priority'
-    ];
-
-    const rows = filteredFindings.map((f) => [
-      f.id,
-      `"${f.factory || 'AOI 1'}"`,
-      `"${f.date}"`,
-      `"${f.area}"`,
-      `"${(f.recordedBy || 'Assessor Genba').replace(/"/g, '""')}"`,
-      `"${f.finding.replace(/"/g, '""')}"`,
-      `"${f.category}"`,
-      `"${f.pic.replace(/"/g, '""')}"`,
-      `"${f.correctiveAction.replace(/"/g, '""')}"`,
-      `"${f.status}"`,
-      `"${f.closeDate || ''}"`,
-      `"${f.attachmentUrl}"`,
-      `"${f.department}"`,
-      `"${f.priority}"`
-    ]);
-
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `genba_leadership_inspection_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const resetFilters = () => {
     setSearchQuery('');
     setSelectedFactory('ALL');
@@ -167,7 +130,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
             Leadership Walkthrough & Inspection
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Daftar tabel temuan lapangan, tindakan perbaikan, bukti foto before-after, serta status penutupan tiap PIC departemen.
+            Genba System for All Production area using 6S and STOP 6 in Apparel One Indonesia for continuous Improvement
           </p>
         </div>
 
@@ -195,31 +158,16 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
             </div>
           )}
 
-          {/* Audit Protection Notice: Temuan bersifat permanen dan tidak dapat dihapus */}
-          <div 
-            className="no-print px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs"
-            title="Sesuai standar audit ISO 9001 / SMK3, seluruh catatan temuan bersifat permanen dan tidak dapat dihapus."
-          >
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="hidden sm:inline">Proteksi Audit</span>
-          </div>
-
+          {/* Action: Hapus Seluruh Temuan */}
           <button
-            onClick={() => window.print()}
-            className="no-print px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="Cetak Lembar Inspeksi"
+            onClick={() => setIsClearAllModalOpen(true)}
+            disabled={findings.length === 0}
+            className="no-print px-3 py-2 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+            title="Hapus seluruh temuan dari tabel (Clear All)"
           >
-            <Printer className="w-4 h-4" />
-            <span className="hidden sm:inline">Cetak / Print</span>
-          </button>
-
-          <button
-            onClick={handleExportCSV}
-            className="no-print px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-            title="Ekspor ke format file CSV"
-          >
-            <Download className="w-4 h-4" />
-            <span>Ekspor CSV</span>
+            <Trash2 className="w-4 h-4 text-rose-600 shrink-0" />
+            <span className="hidden sm:inline">Hapus Seluruh Temuan</span>
+            <span className="sm:hidden">Hapus Semua</span>
           </button>
 
           <button
@@ -343,6 +291,42 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
         </div>
       </div>
 
+      {/* Selected Items Batch Actions Bar */}
+      {selectedIds.length > 0 && (
+        <div className="no-print p-3.5 bg-rose-50 border-2 border-rose-300 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-xs animate-in fade-in slide-in-from-top-1">
+          <div className="flex items-center gap-2.5">
+            <span className="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center text-xs font-black shadow-xs">
+              {selectedIds.length}
+            </span>
+            <div>
+              <p className="text-xs font-black text-rose-950">
+                {selectedIds.length} Temuan Dipilih Berdasarkan ID
+              </p>
+              <p className="text-[11px] text-rose-700">
+                Hapus temuan terpilih secara massal dari tabel dan dashboard
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="px-3 py-1.5 bg-white hover:bg-rose-100 text-slate-700 rounded-lg text-xs font-bold border border-rose-200 transition-colors cursor-pointer"
+            >
+              Batal Pilih
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsBulkDeleteModalOpen(true)}
+              className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus {selectedIds.length} Temuan Terpilih</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Improvement Table: Columns 1 to 10 */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
@@ -350,7 +334,24 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
             {/* Table Header: Sequentially numbered columns 1 to 10 */}
             <thead className="bg-slate-900 text-slate-200 uppercase text-[11px] font-bold tracking-wider select-none">
               <tr>
-                <th className="py-3.5 px-4 w-12 text-center">No</th>
+                <th className="py-3.5 px-3 w-16 text-center">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <input
+                      type="checkbox"
+                      checked={filteredFindings.length > 0 && selectedIds.length === filteredFindings.length}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(filteredFindings.map(f => f.id));
+                        } else {
+                          setSelectedIds([]);
+                        }
+                      }}
+                      title="Pilih / Batalkan Semua Temuan"
+                      className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-400 cursor-pointer accent-amber-600"
+                    />
+                    <span>No</span>
+                  </div>
+                </th>
                 <th className="py-3.5 px-4 min-w-[105px]">1. Date</th>
                 <th className="py-3.5 px-4 min-w-[140px]">2. Area</th>
                 <th className="py-3.5 px-4 min-w-[155px]">3. Assessor (Penginput)</th>
@@ -361,7 +362,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
                 <th className="py-3.5 px-4 min-w-[130px]">8. Status</th>
                 <th className="py-3.5 px-4 min-w-[110px]">9. Close Date</th>
                 <th className="py-3.5 px-4 min-w-[125px] text-center">10. Attachment</th>
-                <th className="no-print py-3.5 px-4 min-w-[85px] text-center">Aksi</th>
+                <th className="no-print py-3.5 px-4 min-w-[140px] text-center">Aksi</th>
               </tr>
             </thead>
 
@@ -387,11 +388,30 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
                 filteredFindings.map((item, index) => (
                   <tr 
                     key={item.id}
-                    className="hover:bg-amber-50/30 transition-colors group"
+                    className={`transition-colors group ${
+                      selectedIds.includes(item.id) 
+                        ? 'bg-rose-50/50 hover:bg-rose-50' 
+                        : 'hover:bg-amber-50/30'
+                    }`}
                   >
-                    {/* Index & ID */}
-                    <td className="py-3 px-4 text-center font-mono font-bold text-slate-400 text-[11px]">
-                      {index + 1}
+                    {/* Index & Selection Checkbox */}
+                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-500 text-[11px]">
+                      <div className="flex items-center justify-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(item.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedIds(prev => [...prev, item.id]);
+                            } else {
+                              setSelectedIds(prev => prev.filter(id => id !== item.id));
+                            }
+                          }}
+                          title={`Pilih temuan ${item.id} untuk dihapus`}
+                          className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 border-slate-300 cursor-pointer accent-amber-600"
+                        />
+                        <span>{index + 1}</span>
+                      </div>
                     </td>
 
                     {/* 1. Date */}
@@ -507,7 +527,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
                     {/* 6. Corrective Action */}
                     <td className="py-3 px-4">
                       <p className="text-slate-800 font-medium leading-relaxed">
-                        {item.correctiveAction}
+                        {item.correctiveAction ? item.correctiveAction : <span className="text-slate-400 font-normal italic">-</span>}
                       </p>
                       {item.impactScore && (
                         <p className="text-[10px] text-amber-800 font-semibold mt-1 bg-amber-50/80 px-1.5 py-0.5 rounded border border-amber-200/60 inline-block">
@@ -598,16 +618,24 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
                       )}
                     </td>
 
-                    {/* Action button: Edit and update progress (temuan permanen tidak dapat dihapus) */}
+                    {/* Action button: Edit and Hapus (Delete by ID) */}
                     <td className="no-print py-3 px-4 text-center whitespace-nowrap">
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => onEditFinding(item)}
-                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                          className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                           title="Edit temuan, unggah foto perbaikan (After), dan update progress"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                           <span>Edit</span>
+                        </button>
+                        <button
+                          onClick={() => setFindingToDelete(item)}
+                          className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+                          title={`Hapus temuan ${item.id} dari tabel`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                          <span>Hapus</span>
                         </button>
                       </div>
                     </td>
@@ -625,9 +653,9 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
             <span className="text-slate-300">|</span>
             <span className="font-semibold text-slate-700">Total: {filteredFindings.length} Catatan</span>
             <span className="text-slate-300">|</span>
-            <span className="text-emerald-700 font-semibold flex items-center gap-1.5">
+            <span className="text-slate-600 font-semibold flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Integritas Audit: Temuan Terproteksi (Tidak Dapat Dihapus)</span>
+              <span>Manajemen Temuan Genba &bull; Kontrol Penghapusan Temuan per ID Aktif</span>
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -636,6 +664,50 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Delete Single Finding Modal */}
+      <DeleteConfirmModal
+        isOpen={Boolean(findingToDelete)}
+        finding={findingToDelete}
+        onClose={() => setFindingToDelete(null)}
+        onConfirm={() => {
+          if (findingToDelete && onDeleteFinding) {
+            onDeleteFinding(findingToDelete.id);
+            setSelectedIds(prev => prev.filter(id => id !== findingToDelete.id));
+          }
+        }}
+      />
+
+      {/* Delete Multiple Selected Findings Modal */}
+      <DeleteConfirmModal
+        isOpen={isBulkDeleteModalOpen}
+        count={selectedIds.length}
+        onClose={() => setIsBulkDeleteModalOpen(false)}
+        onConfirm={() => {
+          if (onDeleteMultipleFindings) {
+            onDeleteMultipleFindings(selectedIds);
+          } else if (onDeleteFinding) {
+            selectedIds.forEach(id => onDeleteFinding(id));
+          }
+          setSelectedIds([]);
+        }}
+      />
+
+      {/* Clear All Findings Modal */}
+      <DeleteConfirmModal
+        isOpen={isClearAllModalOpen}
+        isClearAll={true}
+        count={findings.length}
+        onClose={() => setIsClearAllModalOpen(false)}
+        onConfirm={() => {
+          if (onClearAllFindings) {
+            onClearAllFindings();
+          } else if (onDeleteMultipleFindings) {
+            onDeleteMultipleFindings(findings.map(f => f.id));
+          }
+          setSelectedIds([]);
+        }}
+      />
     </div>
   );
 };

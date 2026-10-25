@@ -16,10 +16,13 @@ import {
   Award,
   Boxes,
   Edit3,
-  Building2
+  Building2,
+  CheckSquare,
+  UserCheck
 } from 'lucide-react';
 import { InspectionFinding, ActiveTab, FindingCategory } from '../types';
 import { DepartmentAchievementChart } from './DepartmentAchievementChart';
+import { AreaPerformanceDashboard } from './AreaPerformanceDashboard';
 import { FINDING_CATEGORIES } from '../data/mockData';
 
 const CATEGORY_META: Record<FindingCategory, {
@@ -122,6 +125,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     })
     .slice(0, 4);
 
+  // Assessor leaderboard/aggregation
+  const assessorStats = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    findings.forEach((f) => {
+      const name = (f.inspectorName || f.recordedBy || 'Assessor Genba').trim();
+      if (name) {
+        map[name] = (map[name] || 0) + 1;
+      }
+    });
+    return Object.entries(map)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [findings]);
+
+  // Recent findings across all factories
+  const recentFindings = React.useMemo(() => {
+    return [...findings]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 6);
+  }, [findings]);
+
   return (
     <div className="space-y-8 pb-12 animate-in fade-in duration-300">
       {/* Hero Welcome & Quick Notice */}
@@ -151,6 +176,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             >
               <Camera className="w-4 h-4" />
               <span>Input Hasil Walkthrough</span>
+            </button>
+            <button
+              id="hero-view-checksheet-btn"
+              onClick={() => onNavigateTab('checksheet')}
+              className="px-4 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 hover:text-white font-semibold rounded-xl text-xs sm:text-sm border border-emerald-500/40 transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <CheckSquare className="w-4 h-4 text-emerald-400" />
+              <span>Checksheet 5 Area (STOP-6)</span>
             </button>
             <button
               id="hero-view-inspection-table-btn"
@@ -188,8 +221,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <BarChart3 className="w-5 h-5 text-amber-600" />
               Status Temuan Real-Time Manajemen
             </h2>
-            <p className="text-xs text-slate-500">
-              Ringkasan pemantauan seluruh tindak lanjut perbaikan pabrik saat ini
+            <p className="text-xs sm:text-sm text-slate-500 font-medium">
+              Genba System for All Production area using 6S and STOP 6 in Apparel One Indonesia for continuous Improvement
             </p>
           </div>
           <span className="text-xs text-slate-400 font-mono">
@@ -270,6 +303,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Pemantauan Temuan Tiap Area per Factory */}
+      <AreaPerformanceDashboard 
+        findings={findings}
+        onNavigateToTable={() => onNavigateTab('leadership-walkthrough')}
+      />
 
       {/* Real-time Department Improvement Achievement Bar Chart */}
       <DepartmentAchievementChart findings={findings} />
@@ -393,6 +432,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </span>
                       <span>{item.area} &bull; PIC: {item.pic}</span>
                     </p>
+                    <p className="text-[10px] text-amber-900 font-semibold flex items-center gap-1 mt-1">
+                      <UserCheck className="w-3 h-3 text-amber-600 shrink-0" />
+                      <span>Ditemukan Assessor: <strong className="text-slate-900">{item.inspectorName || item.recordedBy || 'Assessor Genba'}</strong></span>
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-800">
@@ -412,6 +455,141 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* SEKSI: LOG TEMUAN LAPANGAN & PROFIL ASSESSOR PENEMU */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-7 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-amber-500/15 text-amber-800 border border-amber-300/40">
+                <UserCheck className="w-5 h-5 text-amber-700" />
+              </span>
+              <h3 className="text-base font-extrabold text-slate-900">
+                Pemantauan Temuan Berdasarkan Assessor / Inspektor Penemu
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Transparansi pelaporan audit Genba &mdash; mengetahui siapa saja assessor yang menemukan temuan di setiap lini per factory
+            </p>
+          </div>
+
+          <button
+            onClick={() => onNavigateTab('leadership-walkthrough')}
+            className="px-3.5 py-1.5 bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+          >
+            <span>Buka Tabel Semua Temuan ({total})</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Top Active Assessors Pill Summary */}
+        {assessorStats.length > 0 && (
+          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/80 flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1 mr-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              Assessor Teraktif di Lapangan:
+            </span>
+            {assessorStats.map((stat, idx) => (
+              <span
+                key={stat.name}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white border border-slate-200 shadow-2xs text-slate-800"
+              >
+                <span className="w-4 h-4 rounded-full bg-amber-100 text-amber-900 font-black text-[9px] flex items-center justify-center">
+                  {idx + 1}
+                </span>
+                <span>{stat.name}</span>
+                <span className="font-mono font-bold text-amber-800 bg-amber-50 px-1 rounded text-[10px] border border-amber-200">
+                  {stat.count} temuan
+                </span>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Grid of Recent Findings with Assessor Attribution */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {recentFindings.map((finding) => {
+            const assessor = (finding.inspectorName || finding.recordedBy || 'Assessor Genba').trim();
+            const isOpen = finding.status === 'Open';
+            const isClosed = finding.status === 'Closed';
+
+            return (
+              <div
+                key={finding.id}
+                className="p-3.5 rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-xs transition-all bg-white flex flex-col justify-between group"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="font-mono text-[10px] font-bold text-slate-400">
+                      #{finding.id}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      isClosed
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : isOpen
+                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {finding.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-start gap-2.5 mb-2.5">
+                    {/* Thumbnail */}
+                    <div
+                      onClick={() => onSelectPhotoProof(finding)}
+                      className="w-14 h-14 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-slate-900 cursor-pointer shadow-2xs"
+                      title="Klik untuk zoom foto"
+                    >
+                      <img
+                        src={finding.attachmentUrl}
+                        alt="Bukti Temuan"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=300&auto=format&fit=crop&q=80';
+                        }}
+                      />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p 
+                        onClick={() => onSelectPhotoProof(finding)}
+                        className="text-xs font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-amber-800 transition-colors cursor-pointer"
+                        title={finding.finding}
+                      >
+                        {finding.finding}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500">
+                        <span className="font-extrabold text-[9px] uppercase px-1 py-0.2 rounded bg-amber-100 text-amber-950 border border-amber-300">
+                          {finding.factory || 'AOI 1'}
+                        </span>
+                        <span className="truncate">{finding.area}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Attribution: Who found it? */}
+                <div className="pt-2.5 border-t border-slate-100 mt-1 flex items-center justify-between text-[11px]">
+                  <div className="flex items-center gap-1.5 min-w-0 pr-2">
+                    <UserCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[9px] text-slate-400 uppercase font-semibold leading-none">Ditemukan Oleh:</p>
+                      <p className="font-extrabold text-slate-800 truncate leading-tight mt-0.5" title={assessor}>
+                        {assessor}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="text-[10px] text-slate-400 shrink-0 font-mono">
+                    {finding.date}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

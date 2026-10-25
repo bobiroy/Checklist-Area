@@ -19,7 +19,8 @@ import {
   HelpCircle,
   Building2,
   Lock,
-  ShieldCheck
+  ShieldCheck,
+  Target
 } from 'lucide-react';
 import { 
   InspectionFinding, 
@@ -214,10 +215,6 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
     }
     if (!pic.trim()) {
       setErrorMsg('Person In Charge (PIC) wajib diisi.');
-      return;
-    }
-    if (!correctiveAction.trim()) {
-      setErrorMsg('Tindakan korektif / rencana perbaikan wajib diisi.');
       return;
     }
     if (!attachmentUrl) {
@@ -617,8 +614,9 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
               {/* Tindakan Korektif & Progress Notes */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                    Tindakan Korektif yang Dilakukan / (Corrective Action Performed) <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                    <span>Tindakan Korektif yang Dilakukan / (Corrective Action Performed)</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Opsional / (Optional)</span>
                   </label>
                   <textarea
                     rows={3}
@@ -626,7 +624,6 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
                     onChange={(e) => setCorrectiveAction(e.target.value)}
                     placeholder="Uraikan aksi nyata yang telah dikerjakan (contoh: kabel sensor telah diganti baru, dilindungi conduit fleksibel baja, dan diikat rapi)..."
                     className="w-full px-3.5 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white"
-                    required
                   />
                 </div>
 
@@ -640,6 +637,23 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
                     value={progressNotes}
                     onChange={(e) => setProgressNotes(e.target.value)}
                     placeholder="Catatan update progress lapangan, nama teknisi yang mengerjakan, atau catatan verifikasi supervisor..."
+                    className="w-full px-3.5 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Target className="w-3.5 h-3.5 text-amber-600" />
+                      <span>🎯 Dampak &amp; Manfaat Hasil Kaizen / (Impact Score &amp; Value)</span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-normal">Opsional / (Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={impactScore}
+                    onChange={(e) => setImpactScore(e.target.value)}
+                    placeholder="Contoh: Pemisahan tegas pedestrian vs alat berat, efisiensi waktu changeover 12%, zero near-miss..."
                     className="w-full px-3.5 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white"
                   />
                 </div>
@@ -857,18 +871,39 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
               {!isEditing && (
                 <>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                      7. Tindakan Korektif &amp; Rencana Perbaikan / (Corrective Action &amp; Countermeasure) <span className="text-rose-500">*</span>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                      <span>7. Tindakan Korektif &amp; Rencana Perbaikan / (Corrective Action &amp; Countermeasure)</span>
+                      <span className="text-[10px] text-slate-400 font-normal">Opsional / (Optional)</span>
                     </label>
                     <textarea
                       id="input-finding-action"
                       rows={2}
                       value={correctiveAction}
                       onChange={(e) => setCorrectiveAction(e.target.value)}
-                      placeholder="Rencana aksi korektif, modifikasi fixture, pembersihan 5S, standardisasi SOP..."
-                      className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white"
-                      required
+                      placeholder="Rencana aksi korektif, modifikasi fixture, pembersihan 5S, standardisasi SOP (opsional saat pencatatan awal)..."
+                      className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white placeholder:text-slate-400"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Target className="w-3.5 h-3.5 text-amber-600" />
+                        <span>🎯 Dampak &amp; Manfaat Hasil Kaizen / (Impact Score &amp; Benefits)</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-normal">Opsional / (Optional)</span>
+                    </label>
+                    <input
+                      id="input-finding-impact"
+                      type="text"
+                      value={impactScore}
+                      onChange={(e) => setImpactScore(e.target.value)}
+                      placeholder="Contoh: Pemisahan tegas pedestrian vs alat berat, efisiensi waktu changeover 12%, zero near-miss..."
+                      className="w-full px-3.5 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white placeholder:text-slate-400"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Keterangan nilai manfaat / dampak positif perbaikan yang tampil pada tabel temuan (🎯).
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -11,6 +11,39 @@ import {
 
 export const DEPARTMENTS: DepartmentInfo[] = [
   {
+    id: 'ppa',
+    name: 'PPA',
+    code: 'PPA',
+    headName: 'Bpk. Hendri Gunawan, S.T.',
+    headTitle: 'Head of Pre-Production & Automation (PPA)',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80',
+    email: 'hendri.gunawan@factory-genba.co.id',
+    phone: 'Ext. 2150 / +62 812-9876-5432',
+    teamSize: 28,
+    color: 'indigo',
+    badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    badgeText: 'text-indigo-700',
+    genbaRoleDescription: 'Pengawasan area persiapan pra-produksi dan otomasi (PPA Auto & Manual): sistem auto-spreading kain, digital nesting CAD, mesin pemotong otomatis (auto cutter), dan integrasi otomatisasi lini produksi.',
+    keyResponsibilities: [
+      'Kalibrasi akurasi sensor optik dan pisau putar mesin auto-cutter',
+      'Pengecekan sistem vacuum table auto-spreading dan keselamatan tombol emergency stop',
+      'Pemantauan utilisasi mesin otomatis dan efisiensi konsumsi energi listrik',
+      'Penerapan 5S dan K3 pada area mekanikal presisi dan panel kontrol PLC otomasi'
+    ],
+    inspectionAreas: [
+      'PPA Auto & Manual Line',
+      'Auto-Spreading Vacuum Table Bay',
+      'CAD Nesting & Digital Pattern Station',
+      'Automation PLC Control & Server Rack Area'
+    ],
+    raci: {
+      responsible: 'Keandalan mesin otomasi pemotongan dan keselamatan operator PPA.',
+      accountable: 'Akurasi presisi potong digital dan kesiapan feeder panel ke sewing.',
+      consulted: 'Sinkronisasi software pola CAD dengan technical engineering Adidas.',
+      informed: 'Status kesiapan operasional mesin otomasi harian ke tim Cutting.'
+    }
+  },
+  {
     id: 'wh',
     name: 'Warehouse',
     code: 'WH',

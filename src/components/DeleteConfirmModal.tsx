@@ -3,19 +3,23 @@ import { Trash2, AlertTriangle, X } from 'lucide-react';
 import { InspectionFinding } from '../types';
 
 interface DeleteConfirmModalProps {
-  finding: InspectionFinding | null;
+  finding?: InspectionFinding | null;
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (id: string) => void;
+  onConfirm: () => void;
+  count?: number;
+  isClearAll?: boolean;
 }
 
 export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   finding,
   isOpen,
   onClose,
-  onConfirm
+  onConfirm,
+  count,
+  isClearAll
 }) => {
-  if (!isOpen || !finding) return null;
+  if (!isOpen) return null;
 
   return (
     <div 
@@ -36,30 +40,47 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
           </div>
           
           <h3 className="text-lg font-black text-slate-900 mb-1">
-            Hapus Temuan Inspeksi?
+            {isClearAll 
+              ? 'Hapus Seluruh Temuan?' 
+              : count && count > 1 
+              ? `Hapus ${count} Temuan Terpilih?` 
+              : `Hapus Temuan ${finding?.id || ''}?`}
           </h3>
           <p className="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
-            Apakah Anda yakin ingin menghapus temuan ini dari tabel Leadership Walkthrough &amp; Inspection?
+            {isClearAll 
+              ? 'Tindakan ini akan menghapus seluruh catatan temuan dari tabel & dashboard.' 
+              : count && count > 1
+              ? `Tindakan ini akan menghapus ${count} temuan terpilih secara permanen dari tabel & dashboard.`
+              : 'Apakah Anda yakin ingin menghapus data temuan ini secara permanen dari tabel & dashboard?'}
           </p>
 
-          {/* Finding summary card */}
-          <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-left text-xs space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="font-mono font-bold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded border border-amber-200 text-[11px]">
-                {finding.id}
-              </span>
-              <span className="text-[11px] text-slate-500 font-semibold">{finding.date}</span>
+          {/* Finding summary card (if single finding) */}
+          {finding && !isClearAll && (!count || count <= 1) && (
+            <div className="mt-4 p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-left text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded border border-amber-200 text-[11px]">
+                  {finding.id}
+                </span>
+                <span className="text-[11px] text-slate-500 font-semibold">{finding.date}</span>
+              </div>
+              
+              <p className="font-bold text-slate-800 line-clamp-2 leading-snug">
+                {finding.finding}
+              </p>
+              
+              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1.5 border-t border-slate-200/60">
+                <span className="truncate max-w-[180px]">Area: <strong>{finding.area}</strong></span>
+                <span className="truncate max-w-[140px]">PIC: <strong>{finding.pic}</strong></span>
+              </div>
             </div>
-            
-            <p className="font-bold text-slate-800 line-clamp-2 leading-snug">
-              {finding.finding}
-            </p>
-            
-            <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1.5 border-t border-slate-200/60">
-              <span className="truncate max-w-[180px]">Area: <strong>{finding.area}</strong></span>
-              <span className="truncate max-w-[140px]">PIC: <strong>{finding.pic}</strong></span>
+          )}
+
+          {isClearAll && (
+            <div className="mt-4 p-3 bg-rose-50 rounded-xl border border-rose-200 text-left text-xs flex items-center gap-2.5 text-rose-800">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+              <span>Data bawaan dapat dipulihkan kembali kapan saja melalui menu tombol reset di bagian bawah halaman.</span>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -76,13 +97,19 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             type="button"
             id="confirm-delete-btn"
             onClick={() => {
-              onConfirm(finding.id);
+              onConfirm();
               onClose();
             }}
             className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            <span>Ya, Hapus Temuan</span>
+            <span>
+              {isClearAll 
+                ? 'Ya, Hapus Semua Temuan' 
+                : count && count > 1 
+                ? `Ya, Hapus ${count} Temuan` 
+                : 'Ya, Hapus Temuan'}
+            </span>
           </button>
         </div>
       </div>

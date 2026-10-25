@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   ShieldCheck,
   User,
-  LogOut
+  LogOut,
+  CheckSquare
 } from 'lucide-react';
 import { ActiveTab, InspectionFinding, UserAccount } from '../types';
 
@@ -221,6 +222,22 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Factory Dashboard</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 font-semibold font-mono">
               AOI 1-3
+            </span>
+          </button>
+
+          <button
+            id="nav-tab-checksheet"
+            onClick={() => onSelectTab('checksheet')}
+            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap cursor-pointer ${
+              activeTab === 'checksheet'
+                ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <CheckSquare className="w-4 h-4 text-emerald-600" />
+            <span>Checksheet</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-semibold font-mono">
+              5 Area
             </span>
           </button>
 
