@@ -50,7 +50,6 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [findingToDelete, setFindingToDelete] = useState<InspectionFinding | null>(null);
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
-  const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFactory, setSelectedFactory] = useState<string>('ALL');
   const [selectedArea, setSelectedArea] = useState<string>('ALL');
@@ -157,18 +156,6 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
               )}
             </div>
           )}
-
-          {/* Action: Hapus Seluruh Temuan */}
-          <button
-            onClick={() => setIsClearAllModalOpen(true)}
-            disabled={findings.length === 0}
-            className="no-print px-3 py-2 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
-            title="Hapus seluruh temuan dari tabel (Clear All)"
-          >
-            <Trash2 className="w-4 h-4 text-rose-600 shrink-0" />
-            <span className="hidden sm:inline">Hapus Seluruh Temuan</span>
-            <span className="sm:hidden">Hapus Semua</span>
-          </button>
 
           <button
             id="table-add-new-btn"
@@ -688,22 +675,6 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
             onDeleteMultipleFindings(selectedIds);
           } else if (onDeleteFinding) {
             selectedIds.forEach(id => onDeleteFinding(id));
-          }
-          setSelectedIds([]);
-        }}
-      />
-
-      {/* Clear All Findings Modal */}
-      <DeleteConfirmModal
-        isOpen={isClearAllModalOpen}
-        isClearAll={true}
-        count={findings.length}
-        onClose={() => setIsClearAllModalOpen(false)}
-        onConfirm={() => {
-          if (onClearAllFindings) {
-            onClearAllFindings();
-          } else if (onDeleteMultipleFindings) {
-            onDeleteMultipleFindings(findings.map(f => f.id));
           }
           setSelectedIds([]);
         }}
