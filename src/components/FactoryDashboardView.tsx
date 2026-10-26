@@ -48,7 +48,7 @@ interface FactoryDashboardViewProps {
   onOpenLoginModal?: (reason?: string) => void;
 }
 
-const FACTORIES: FactoryOption[] = ['AOI 1', 'AOI 2', 'AOI 3'];
+const FACTORIES: FactoryOption[] = ['AOI 1', 'AOI 2', 'AOI 3', 'DC'];
 
 const FACTORY_INFO: Record<FactoryOption, {
   name: string;
@@ -67,7 +67,7 @@ const FACTORY_INFO: Record<FactoryOption, {
 }> = {
   'AOI 1': {
     name: 'AOI 1',
-    fullName: 'PT Apparel One Indonesia - Factory AOI 1',
+    fullName: 'Apparel One Indonesia 1',
     subtitle: 'Main Production & Apparel Hub',
     location: 'Kawasan Berikat Blok A-1, Semarang',
     description: 'Genba System for All Production area using 6S and STOP 6 in Apparel One Indonesia for continuous Improvement',
@@ -82,7 +82,7 @@ const FACTORY_INFO: Record<FactoryOption, {
   },
   'AOI 2': {
     name: 'AOI 2',
-    fullName: 'PT Apparel One Indonesia - Factory AOI 2',
+    fullName: 'Apparel One Indonesia 2',
     subtitle: 'Cutting & Automated Sewing Center',
     location: 'Kawasan Industri Wijayakusuma Blok B-3, Semarang',
     description: 'Genba System for All Production area using 6S and STOP 6 in Apparel One Indonesia for continuous Improvement',
@@ -97,7 +97,7 @@ const FACTORY_INFO: Record<FactoryOption, {
   },
   'AOI 3': {
     name: 'AOI 3',
-    fullName: 'PT Apparel One Indonesia - Factory AOI 3',
+    fullName: 'Apparel One Indonesia 3',
     subtitle: 'Finishing, QA & Logistics Fulfillment',
     location: 'Kawasan Industri Terboyo Mega Megah Blok C-5, Semarang',
     description: 'Genba System for All Production area using 6S and STOP 6 in Apparel One Indonesia for continuous Improvement',
@@ -109,6 +109,21 @@ const FACTORY_INFO: Record<FactoryOption, {
     barColor: 'bg-emerald-600',
     gradient: 'from-emerald-600 via-teal-700 to-slate-900',
     tagline: 'Audit Kualitas Ekspor, Steam Press & Kartonasi'
+  },
+  'DC': {
+    name: 'DC',
+    fullName: 'Apparel One Indonesia DC',
+    subtitle: 'Central Logistics & Distribution Hub',
+    location: 'Kawasan Industri Candi Blok D, Semarang',
+    description: 'Genba System for All Production area using 6S and STOP 6 in Apparel One Indonesia for continuous Improvement',
+    leadCoordinator: 'Bpk. Dedi Kurniawan, S.T. (DC & Logistics Lead)',
+    accentBg: 'bg-teal-600',
+    accentText: 'text-teal-800',
+    borderActive: 'border-teal-500 bg-teal-50/60 ring-2 ring-teal-500',
+    badgeBg: 'bg-teal-100 text-teal-900 border-teal-300',
+    barColor: 'bg-teal-600',
+    gradient: 'from-teal-700 via-cyan-800 to-slate-900',
+    tagline: 'Pusat Distribusi, Logistik & Pergudangan Terpadu'
   }
 };
 
@@ -361,8 +376,8 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
           </div>
         </div>
 
-        {/* 3 Interactive Factory Cards: Exactly 1 is selected */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        {/* 4 Interactive Factory Cards: Exactly 1 is selected */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           {factorySelectorMetrics.map((stat) => {
             const isSelected = selectedFactory === stat.factory;
 
@@ -409,13 +424,6 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
                   <h3 className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug">
                     {stat.info.fullName}
                   </h3>
-                  <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
-                    {stat.info.subtitle}
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                    <span className="truncate">{stat.info.location}</span>
-                  </p>
                 </div>
 
                 {/* Card summary stats */}

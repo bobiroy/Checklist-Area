@@ -16,7 +16,7 @@ export type GenbaHierarchyLevel =
   | 'cross-check'  // CROSS CHECK GENBA MANAGEMENT - Monthly Genba internal Operation Excellence
   | 'daily-genba'; // DAILY GENBA (SHOPFLOOR MANAGEMENT) - GL & Supervisor Genba everyday on site
 
-export type FactoryOption = 'AOI 1' | 'AOI 2' | 'AOI 3';
+export type FactoryOption = 'AOI 1' | 'AOI 2' | 'AOI 3' | 'DC';
 
 export type AssessorRoleGroup = 'Facilitator' | 'PIC Area' | 'Assessors';
 
@@ -78,7 +78,7 @@ export interface GenbaWalkthroughSession {
 
 export interface InspectionFinding {
   id: string;
-  factory?: FactoryOption; // Factory unit: 'AOI 1' | 'AOI 2' | 'AOI 3'
+  factory?: FactoryOption; // Factory unit: 'AOI 1' | 'AOI 2' | 'AOI 3' | 'DC'
   date: string; // YYYY-MM-DD
   area: string; // e.g. "Stamping Line A", "Assembly Line 2"
   finding: string; // Deskripsi temuan

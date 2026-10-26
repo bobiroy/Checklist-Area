@@ -326,9 +326,9 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Semua (AOI 1-3)
+              Semua (AOI &amp; DC)
             </button>
-            {(['AOI 1', 'AOI 2', 'AOI 3'] as FactoryOption[]).map((fac) => {
+            {(['AOI 1', 'AOI 2', 'AOI 3', 'DC'] as FactoryOption[]).map((fac) => {
               const facCount = findings.filter((f) => (f.factory || 'AOI 1') === fac).length;
               return (
                 <button
@@ -389,7 +389,7 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
         <div className="flex items-center gap-2">
           <span className="font-bold text-slate-700">Filter Aktif:</span>
           <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-extrabold border border-amber-300">
-            {selectedFactory === 'ALL' ? 'Seluruh Fasilitas (AOI 1 - AOI 3)' : `Unit Pabrik ${selectedFactory}`}
+            {selectedFactory === 'ALL' ? 'Seluruh Fasilitas (AOI & DC)' : `Unit Pabrik ${selectedFactory}`}
           </span>
           <span className="text-slate-300">|</span>
           <span className="text-slate-500">

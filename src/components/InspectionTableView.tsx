@@ -212,6 +212,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
               <option value="AOI 1">AOI 1</option>
               <option value="AOI 2">AOI 2</option>
               <option value="AOI 3">AOI 3</option>
+              <option value="DC">DC</option>
             </select>
           </div>
 

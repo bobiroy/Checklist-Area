@@ -696,9 +696,9 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
                   <span className="text-[11px] text-slate-500 font-medium">Pilih salah satu unit pabrik / factory</span>
                 </div>
 
-                {/* 3 Option Boxes */}
-                <div className="grid grid-cols-3 gap-3">
-                  {(['AOI 1', 'AOI 2', 'AOI 3'] as const).map((opt) => {
+                {/* 4 Option Boxes: AOI 1, AOI 2, AOI 3, DC */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {(['AOI 1', 'AOI 2', 'AOI 3', 'DC'] as const).map((opt) => {
                     const isSelected = factory === opt;
                     return (
                       <button

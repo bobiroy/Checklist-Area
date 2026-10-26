@@ -561,7 +561,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Unit Pabrik:</span>
             </div>
             <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
-              {(['AOI 1', 'AOI 2', 'AOI 3'] as FactoryOption[]).map(fac => (
+              {(['AOI 1', 'AOI 2', 'AOI 3', 'DC'] as FactoryOption[]).map(fac => (
                 <button
                   key={fac}
                   onClick={() => setSelectedFactory(fac)}

@@ -199,7 +199,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               className="px-4 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-white font-semibold rounded-xl text-xs sm:text-sm border border-amber-500/40 transition-all flex items-center gap-2 cursor-pointer"
             >
               <Building2 className="w-4 h-4 text-amber-400" />
-              <span>Factory Dashboard (AOI 1-3)</span>
+              <span>Factory Dashboard (AOI &amp; DC)</span>
             </button>
             <button
               id="hero-view-management-structure-btn"
