@@ -36,6 +36,7 @@ import {
   SAMPLE_PHOTO_PRESETS, 
   DEPARTMENTS
 } from '../data/mockData';
+import { compressImageFile } from '../utils/imageCompressor';
 
 interface FindingFormModalProps {
   isOpen: boolean;
@@ -139,27 +140,22 @@ export const FindingFormModal: React.FC<FindingFormModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Handle local file upload
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, isAfter: boolean = false) => {
+  // Handle local file upload with canvas compression
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, isAfter: boolean = false) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrorMsg('Ukuran file foto maksimal 5MB.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          if (isAfter) {
-            setAttachmentAfterUrl(event.target.result as string);
-            setInfoMsg('Foto bukti perbaikan (After) berhasil diunggah!');
-            setTimeout(() => setInfoMsg(''), 3000);
-          } else {
-            setAttachmentUrl(event.target.result as string);
-          }
+      try {
+        const compressedDataUrl = await compressImageFile(file, 1024, 1024, 0.7);
+        if (isAfter) {
+          setAttachmentAfterUrl(compressedDataUrl);
+          setInfoMsg('Foto bukti perbaikan (After) berhasil diunggah!');
+          setTimeout(() => setInfoMsg(''), 3000);
+        } else {
+          setAttachmentUrl(compressedDataUrl);
         }
-      };
-      reader.readAsDataURL(file);
+      } catch {
+        setErrorMsg('Gagal memproses file foto. Silakan coba kembali.');
+      }
     }
   };
 

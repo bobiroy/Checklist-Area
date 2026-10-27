@@ -50,13 +50,8 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Hanya temuan 1 sampai 3 yang tersisa dari data sample bawaan
-          const legacyIdsToRemove = [
-            'FND-2026-004', 'FND-2026-005', 'FND-2026-006', 'FND-2026-007',
-            'FND-2026-008', 'FND-2026-009', 'FND-2026-010'
-          ];
-          const filtered = parsed.filter((item: InspectionFinding) => !legacyIdsToRemove.includes(item.id));
-          return filtered.map((item: InspectionFinding) => ({
+          // Normalize categories and departments
+          return parsed.map((item: InspectionFinding) => ({
             ...item,
             category: normalizeCategory(item.category),
             department: normalizeDepartment(item.department)
@@ -68,6 +63,9 @@ export default function App() {
     }
     return INITIAL_FINDINGS;
   });
+
+  // Global Active Factory synchronization across Checksheet, Factory Dashboard, and modal
+  const [activeFactory, setActiveFactory] = useState<FactoryOption>('AOI 1');
 
   // User Authentication & Role State (Admin vs Anggota)
   // LAYER 1: First layer requires username & password before accessing web
@@ -154,6 +152,11 @@ export default function App() {
       ...finding,
       hierarchyLevel: 'bi-monthly'
     };
+
+    if (finding.factory) {
+      setActiveFactory(finding.factory);
+    }
+
     setFindings((prev) => {
       const existsIndex = prev.findIndex((f) => f.id === findingWithBI.id);
       if (existsIndex >= 0) {
@@ -300,8 +303,10 @@ export default function App() {
         {activeTab === 'factory-dashboard' && (
           <FactoryDashboardView
             findings={findings}
+            selectedFactory={activeFactory}
+            onSelectFactory={setActiveFactory}
             onOpenFindingModal={(defaultFac) => {
-              setDefaultFactoryForModal(defaultFac || 'AOI 1');
+              setDefaultFactoryForModal(defaultFac || activeFactory);
               setEditingFinding(null);
               setIsFormModalOpen(true);
             }}
@@ -320,9 +325,15 @@ export default function App() {
           <ChecksheetView
             findings={findings}
             currentUser={currentUser}
+            selectedFactory={activeFactory}
+            onSelectFactory={setActiveFactory}
             onSaveFinding={handleSaveFinding}
             onSelectPhotoProof={(finding) => setPhotoProofFinding(finding)}
             onGoToInspectionTable={() => setActiveTab('leadership-walkthrough')}
+            onNavigateToFactoryDashboard={(factory) => {
+              setActiveFactory(factory);
+              setActiveTab('factory-dashboard');
+            }}
           />
         )}
 

@@ -220,9 +220,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <Building2 className="w-4 h-4 text-amber-600" />
             <span>Factory Dashboard</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 font-semibold font-mono">
-              AOI 1-3
-            </span>
           </button>
 
           <button

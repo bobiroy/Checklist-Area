@@ -26,10 +26,12 @@ import {
   Cpu,
   Store,
   UserCheck,
-  User
+  User,
+  Loader2
 } from 'lucide-react';
 import { InspectionFinding, FactoryOption, FindingCategory, PriorityLevel, UserAccount } from '../types';
 import { SAMPLE_PHOTO_PRESETS } from '../data/mockData';
+import { compressImageFile } from '../utils/imageCompressor';
 
 export type ChecksheetAreaId = 'warehouse' | 'cutting' | 'distribusi' | 'sewing' | 'finish-good';
 export type DistribusiSubAreaId = 'ppa' | 'supermarket' | 'heat-transfer';
@@ -302,6 +304,9 @@ interface ChecksheetViewProps {
   onSaveFinding: (finding: InspectionFinding) => void;
   onSelectPhotoProof?: (finding: InspectionFinding) => void;
   onGoToInspectionTable?: () => void;
+  selectedFactory?: FactoryOption;
+  onSelectFactory?: (factory: FactoryOption) => void;
+  onNavigateToFactoryDashboard?: (factory: FactoryOption) => void;
 }
 
 interface ItemFindingDraft {
@@ -319,7 +324,10 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   currentUser,
   onSaveFinding,
   onSelectPhotoProof,
-  onGoToInspectionTable
+  onGoToInspectionTable,
+  selectedFactory: controlledFactory,
+  onSelectFactory,
+  onNavigateToFactoryDashboard
 }) => {
   // 1. Selected Main Area (Default to 'distribusi' so PPA is immediately ready as requested)
   const [selectedAreaId, setSelectedAreaId] = useState<ChecksheetAreaId>('distribusi');
@@ -327,8 +335,20 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   // 2. Selected Sub-Area when Distribusi is active: 'ppa' | 'supermarket' | 'heat-transfer'
   const [selectedDistribusiSubArea, setSelectedDistribusiSubArea] = useState<DistribusiSubAreaId>('ppa');
   
-  // 3. Selected Factory Unit
-  const [selectedFactory, setSelectedFactory] = useState<FactoryOption>('AOI 1');
+  // 3. Selected Factory Unit (Synchronized with global app factory)
+  const [internalFactory, setInternalFactory] = useState<FactoryOption>(controlledFactory || 'AOI 1');
+
+  React.useEffect(() => {
+    if (controlledFactory) {
+      setInternalFactory(controlledFactory);
+    }
+  }, [controlledFactory]);
+
+  const selectedFactory = controlledFactory || internalFactory;
+  const setSelectedFactory = (fac: FactoryOption) => {
+    setInternalFactory(fac);
+    onSelectFactory?.(fac);
+  };
 
   // 3b. Assessor Name State - Default kosong tanpa tulisan
   const [assessorName, setAssessorName] = useState<string>('');
@@ -345,8 +365,15 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   // 6. In-place Draft Finding input for each checkpoint item
   const [draftFindings, setDraftFindings] = useState<Record<string, ItemFindingDraft>>({});
 
-  // 7. Notification alert banner
-  const [alertInfo, setAlertInfo] = useState<string | null>(null);
+  // 7. Notification alert banner with factory context
+  const [alertInfo, setAlertInfo] = useState<{
+    message: string;
+    findingId: string;
+    factory: FactoryOption;
+  } | null>(null);
+
+  // 8. Photo compression loading indicator
+  const [compressingId, setCompressingId] = useState<string | null>(null);
 
   const mainArea = CHECK_AREAS.find(a => a.id === selectedAreaId) || CHECK_AREAS[0];
   const activeSubArea = DISTRIBUSI_SUB_AREAS.find(s => s.id === selectedDistribusiSubArea) || DISTRIBUSI_SUB_AREAS[0];
@@ -390,18 +417,21 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
             [key]: {
               photoUrl: existing?.photoUrl || '',
               description: item?.suggestedFinding || '',
-              pic: existing?.pic || (customPicName.trim() || currentDefaultPic),
-              assessor: existing?.assessor || assessorName,
+              pic: existing?.pic || (customPicName.trim() || ''),
+              assessor: existing?.assessor || (assessorName.trim() || ''),
               priority: existing?.priority || item?.defaultPriority || 'High'
             }
           };
         }
         return prev;
       });
-      const alertMsg = isItem5R
-        ? `⚠️ Poin "${item?.title}" tidak terpenuhi. Silakan ambil foto dan lengkapi rincian di kolom "Item temuan" samping kanan.`
-        : `⚠️ Potensi Bahaya terdeteksi pada poin "${item?.title}". Silakan ambil foto dan lengkapi rincian di kolom "Item temuan" samping kanan.`;
-      setAlertInfo(alertMsg);
+      setAlertInfo({
+        message: isItem5R
+          ? `⚠️ Poin "${item?.title}" tidak terpenuhi. Silakan isi foto & tekan "Simpan ke Database Temuan" di kolom kanan.`
+          : `⚠️ Potensi Bahaya pada "${item?.title}". Silakan isi foto & tekan "Simpan ke Database Temuan" di kolom kanan.`,
+        findingId: '',
+        factory: selectedFactory
+      });
       setTimeout(() => setAlertInfo(null), 5000);
     }
   };
@@ -413,8 +443,8 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
       const existing = prev[key] || {
         photoUrl: '',
         description: '',
-        pic: customPicName.trim() || currentDefaultPic,
-        assessor: assessorName,
+        pic: customPicName.trim() || '',
+        assessor: assessorName.trim() || '',
         priority: 'High'
       };
       return {
@@ -427,24 +457,27 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
     });
   };
 
-  // Handle Photo Upload via Camera or File
-  const handleFileUpload = (checkpointId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle Photo Upload via Camera or File with automatic canvas compression
+  const handleFileUpload = async (checkpointId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 8 * 1024 * 1024) {
-      alert('Ukuran foto terlalu besar. Maksimal 8MB.');
-      return;
+    try {
+      setCompressingId(checkpointId);
+      const compressedDataUrl = await compressImageFile(file, 1024, 1024, 0.7);
+      handleUpdateDraft(checkpointId, 'photoUrl', compressedDataUrl);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          handleUpdateDraft(checkpointId, 'photoUrl', dataUrl);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setCompressingId(null);
     }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        handleUpdateDraft(checkpointId, 'photoUrl', dataUrl);
-      }
-    };
-    reader.readAsDataURL(file);
   };
 
   // Quick Preset Sample Photo Picker
@@ -486,6 +519,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
     };
 
     onSaveFinding(newFinding);
+    onSelectFactory?.(selectedFactory);
 
     // Update draft to indicate saved state
     setDraftFindings(prev => ({
@@ -508,8 +542,11 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
       [key]: 0
     }));
 
-    setAlertInfo(`✅ Berhasil! Temuan #${newFindingId} dicatat atas nama Assessor: "${findingAssessor}". Langsung terupdate di Dashboard & Tabel Inspeksi.`);
-    setTimeout(() => setAlertInfo(null), 5000);
+    setAlertInfo({
+      message: `Temuan #${newFindingId} berhasil dicatat untuk unit "${selectedFactory}"!`,
+      findingId: newFindingId,
+      factory: selectedFactory
+    });
   };
 
   // Summary Metrics for Active Sheet
@@ -538,17 +575,58 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">
       {/* Top Banner Alert if any */}
       {alertInfo && (
-        <div className="bg-amber-500/10 border border-amber-500/30 text-amber-900 px-4 py-3 rounded-xl flex items-center justify-between text-xs sm:text-sm font-semibold shadow-xs animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-            <span>{alertInfo}</span>
+        <div className={`p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-in fade-in border-2 ${
+          alertInfo.findingId 
+            ? 'bg-emerald-50 border-emerald-500/50 text-emerald-950' 
+            : 'bg-amber-50 border-amber-500/50 text-amber-950'
+        }`}>
+          <div className="flex items-start sm:items-center gap-3">
+            <span className={`p-2 rounded-xl text-white shrink-0 shadow-xs ${
+              alertInfo.findingId ? 'bg-emerald-600' : 'bg-amber-600'
+            }`}>
+              {alertInfo.findingId ? (
+                <CheckCircle2 className="w-5 h-5" />
+              ) : (
+                <AlertTriangle className="w-5 h-5" />
+              )}
+            </span>
+            <div>
+              <p className="text-xs sm:text-sm font-black">
+                {alertInfo.message}
+              </p>
+              <p className="text-[11px] opacity-80 mt-0.5 font-medium">
+                {alertInfo.findingId ? (
+                  <span>
+                    Temuan otomatis tersimpan di database unit <strong className="font-extrabold underline">{alertInfo.factory}</strong>.
+                  </span>
+                ) : (
+                  <span>
+                    Unit audit aktif: <strong className="font-extrabold">{alertInfo.factory}</strong>.
+                  </span>
+                )}
+              </p>
+            </div>
           </div>
-          <button 
-            onClick={() => setAlertInfo(null)}
-            className="text-amber-800 hover:text-amber-950 font-bold ml-4 cursor-pointer"
-          >
-            &times;
-          </button>
+          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+            {alertInfo.findingId && onNavigateToFactoryDashboard && (
+              <button
+                type="button"
+                onClick={() => onNavigateToFactoryDashboard(alertInfo.factory)}
+                className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Buka Factory Dashboard ({alertInfo.factory})</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <button 
+              onClick={() => setAlertInfo(null)}
+              className="p-1.5 opacity-70 hover:opacity-100 font-bold hover:bg-black/5 rounded-lg cursor-pointer text-base leading-none"
+              title="Tutup notifikasi"
+            >
+              &times;
+            </button>
+          </div>
         </div>
       )}
 
@@ -1071,15 +1149,22 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                           <div className="border border-dashed border-slate-300 rounded-lg p-2.5 bg-slate-50 hover:bg-slate-100 transition-colors text-center">
                             <div className="flex items-center justify-center gap-2">
                               {/* Camera Input */}
-                              <label className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1.5 cursor-pointer">
-                                <Camera className="w-3.5 h-3.5" />
-                                <span>Kamera HP</span>
+                              <label className={`px-3 py-1.5 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1.5 cursor-pointer ${
+                                compressingId === chk.id ? 'bg-amber-700 opacity-80 cursor-wait' : 'bg-amber-600 hover:bg-amber-700'
+                              }`}>
+                                {compressingId === chk.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Camera className="w-3.5 h-3.5" />
+                                )}
+                                <span>{compressingId === chk.id ? 'Memproses Foto...' : 'Kamera HP'}</span>
                                 <input
                                   type="file"
                                   accept="image/*"
                                   capture="environment"
                                   onChange={(e) => handleFileUpload(chk.id, e)}
                                   className="hidden"
+                                  disabled={compressingId === chk.id}
                                 />
                               </label>
 
@@ -1153,9 +1238,10 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                           </label>
                           <input
                             type="text"
-                            value={draft?.pic || (customPicName.trim() || currentDefaultPic)}
+                            value={draft?.pic !== undefined ? draft.pic : (customPicName || '')}
                             onChange={(e) => handleUpdateDraft(chk.id, 'pic', e.target.value)}
-                            className="w-full px-2 py-1 text-[11px] border border-slate-300 rounded bg-white"
+                            placeholder="Ketik nama PIC..."
+                            className="w-full px-2 py-1 text-[11px] border border-slate-300 rounded bg-white text-slate-900 placeholder:text-slate-400 font-medium"
                           />
                         </div>
                         <div>
@@ -1184,15 +1270,15 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                             draft?.savedFindingId
                               ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                               : isHazard
-                              ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                              ? 'bg-rose-600 hover:bg-rose-700 text-white ring-2 ring-rose-400/40'
                               : 'bg-amber-600 hover:bg-amber-700 text-white'
                           }`}
                         >
                           <Check className="w-3.5 h-3.5" />
                           <span>
                             {draft?.savedFindingId
-                              ? `Perbarui Temuan #${draft.savedFindingId}`
-                              : 'Simpan sebagai Temuan Genba'}
+                              ? `✓ Masuk di Dashboard (#${draft.savedFindingId})`
+                              : 'Simpan ke Database Temuan'}
                           </span>
                         </button>
                       </div>

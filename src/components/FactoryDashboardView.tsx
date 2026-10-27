@@ -46,6 +46,8 @@ interface FactoryDashboardViewProps {
   onQuickUpdateStatus: (id: string, newStatus: FindingStatus) => void;
   currentUser?: UserAccount | null;
   onOpenLoginModal?: (reason?: string) => void;
+  selectedFactory?: FactoryOption;
+  onSelectFactory?: (factory: FactoryOption) => void;
 }
 
 const FACTORIES: FactoryOption[] = ['AOI 1', 'AOI 2', 'AOI 3', 'DC'];
@@ -150,10 +152,25 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
   onEditFinding,
   onQuickUpdateStatus,
   currentUser,
-  onOpenLoginModal
+  onOpenLoginModal,
+  selectedFactory: controlledFactory,
+  onSelectFactory
 }) => {
-  // STRICT 1 PER PILIHAN: Only 1 Factory can be selected at any time ('AOI 1' | 'AOI 2' | 'AOI 3')
-  const [selectedFactory, setSelectedFactory] = useState<FactoryOption>('AOI 1');
+  // STRICT 1 PER PILIHAN: Only 1 Factory can be selected at any time ('AOI 1' | 'AOI 2' | 'AOI 3' | 'DC')
+  const [internalFactory, setInternalFactory] = useState<FactoryOption>(controlledFactory || 'AOI 1');
+
+  // Synchronize internal state when controlledFactory changes
+  React.useEffect(() => {
+    if (controlledFactory) {
+      setInternalFactory(controlledFactory);
+    }
+  }, [controlledFactory]);
+
+  const selectedFactory = controlledFactory || internalFactory;
+  const setSelectedFactory = (fac: FactoryOption) => {
+    setInternalFactory(fac);
+    onSelectFactory?.(fac);
+  };
   
   // Filters for the table and bar chart interactive selection
   const [statusFilter, setStatusFilter] = useState<'ALL' | FindingStatus>('ALL');
