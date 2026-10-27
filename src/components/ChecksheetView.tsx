@@ -405,25 +405,22 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
       [key]: score
     }));
 
-    // If score is 0 (Ada potensi bahaya / Tidak terpenuhi), auto-populate draft suggestion if empty
+    // If score is 0 (Ada potensi bahaya / Tidak terpenuhi), initialize draft without pre-filling suggestion text
     if (score === 0) {
       const item = currentCheckpoints.find(c => c.id === checkpointId);
       const isItem5R = activeCategory === '6s' || item?.category === '5R';
       setDraftFindings(prev => {
         const existing = prev[key];
-        if (!existing || !existing.description) {
-          return {
-            ...prev,
-            [key]: {
-              photoUrl: existing?.photoUrl || '',
-              description: item?.suggestedFinding || '',
-              pic: existing?.pic || (customPicName.trim() || ''),
-              assessor: existing?.assessor || (assessorName.trim() || ''),
-              priority: existing?.priority || item?.defaultPriority || 'High'
-            }
-          };
-        }
-        return prev;
+        return {
+          ...prev,
+          [key]: {
+            photoUrl: existing?.photoUrl || '',
+            description: existing?.description || '',
+            pic: existing?.pic || (customPicName.trim() || ''),
+            assessor: existing?.assessor || (assessorName.trim() || ''),
+            priority: existing?.priority || item?.defaultPriority || 'High'
+          }
+        };
       });
       setAlertInfo({
         message: isItem5R
@@ -490,7 +487,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
     const key = getItemKey(checkpoint.id);
     const draft = draftFindings[key];
 
-    const description = draft?.description?.trim() || checkpoint.suggestedFinding;
+    const description = draft?.description?.trim() || '';
     const photoUrl = draft?.photoUrl || SAMPLE_PHOTO_PRESETS[0].url; // Fallback to safe preset if no camera taken
     const pic = draft?.pic?.trim() || customPicName.trim() || currentDefaultPic;
     const priority = draft?.priority || checkpoint.defaultPriority;
@@ -503,7 +500,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
       factory: selectedFactory,
       date: new Date().toISOString().split('T')[0],
       area: isDistribusi ? `Distribusi - ${activeSubArea.name}` : mainArea.name,
-      finding: `[Checksheet ${checkpoint.code} - ${checkpoint.title}] ${description}`,
+      finding: description ? `[Checksheet ${checkpoint.code} - ${checkpoint.title}] ${description}` : `[Checksheet ${checkpoint.code} - ${checkpoint.title}]`,
       category: checkpoint.category,
       pic: pic,
       department: isDistribusi ? 'Distribusi' : mainArea.department,
@@ -917,9 +914,6 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
             <h2 className="text-lg font-black text-slate-900 tracking-tight">
               {activeCategory === 'stop6' ? 'Safety (STOP-6)' : 'Framework 6S (Housekeeping & K3)'}
             </h2>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold border border-slate-300">
-              Formulir Acuan Genba
-            </span>
           </div>
 
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
@@ -1205,7 +1199,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                           rows={2}
                           value={draft?.description || ''}
                           onChange={(e) => handleUpdateDraft(chk.id, 'description', e.target.value)}
-                          placeholder={chk.suggestedFinding}
+                          placeholder=""
                           className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 bg-white placeholder:text-slate-400 leading-relaxed"
                         />
                       </div>

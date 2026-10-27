@@ -380,19 +380,10 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-800">Sistem Manajemen Genba Factory Improvement</span>
             <span>&bull;</span>
-            <span>PT Apparel One Indonesia Semarang &bull; Continuous Improvement Division</span>
+            <span>PT. Apparel One Indonesia Semarang.</span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleResetData}
-              className="text-slate-400 hover:text-amber-700 underline text-[11px] cursor-pointer"
-            >
-              Reset Data Bawaan (Sample Data)
-            </button>
-            <span className="text-slate-300">|</span>
-            <span>Standar 5S &bull; K3 Zero Accident &bull; ISO 9001</span>
-          </div>
+
         </div>
       </footer>
 
