@@ -1733,12 +1733,25 @@ export const getCheckpointsForArea = (
   return SIX_S_CHECKPOINTS;
 };
 
+const CHECKSHEET_DRAFT_STORAGE_KEY = 'factory_genba_checksheet_draft_v1';
+
+const getCurrentIsoWeek = (): number => {
+  const now = new Date();
+  const date = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+  const dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+};
+
 interface ChecksheetViewProps {
   findings: InspectionFinding[];
   currentUser: UserAccount;
-  onSaveFinding: (finding: InspectionFinding) => void;
+  onSaveFinding: (finding: InspectionFinding) => Promise<void> | void;
+  onSaveMultipleFindings?: (findings: InspectionFinding[]) => Promise<void> | void;
   onSelectPhotoProof?: (finding: InspectionFinding) => void;
   onGoToInspectionTable?: () => void;
+  onNavigateToDashboard?: () => void;
   selectedFactory?: FactoryOption;
   onSelectFactory?: (factory: FactoryOption) => void;
   onNavigateToFactoryDashboard?: (factory: FactoryOption) => void;
@@ -1752,18 +1765,43 @@ interface ItemFindingDraft {
   priority: PriorityLevel;
   savedFindingId?: string;
   savedTime?: string;
+  dirty?: boolean;
 }
+
+interface StoredChecksheetDraft {
+  assessorName?: string;
+  customPicName?: string;
+  scores?: Record<string, 1 | 0>;
+  draftFindings?: Record<string, ItemFindingDraft>;
+}
+
+const loadStoredDraft = (): StoredChecksheetDraft => {
+  try {
+    const raw = localStorage.getItem(CHECKSHEET_DRAFT_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return {};
+};
 
 export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   findings,
   currentUser,
   onSaveFinding,
+  onSaveMultipleFindings,
   onSelectPhotoProof,
   onGoToInspectionTable,
+  onNavigateToDashboard,
   selectedFactory: controlledFactory,
   onSelectFactory,
   onNavigateToFactoryDashboard
 }) => {
+  const initialDraft = React.useMemo(() => loadStoredDraft(), []);
+
   // 1. Selected Main Area (Default to 'distribusi' so PPA is immediately ready as requested)
   const [selectedAreaId, setSelectedAreaId] = useState<ChecksheetAreaId>('distribusi');
 
@@ -1788,13 +1826,13 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
     onSelectFactory?.(fac);
   };
 
-  // 3b. Assessor Name State - Default kosong tanpa tulisan
-  const [assessorName, setAssessorName] = useState<string>('');
+  // 3b. Assessor Name State
+  const [assessorName, setAssessorName] = useState<string>(initialDraft.assessorName || '');
 
-  // 3c. PIC Name State - Input teks bebas nama PIC dibawah Assessor (Default kosong)
-  const [customPicName, setCustomPicName] = useState<string>('');
+  // 3c. PIC Name State
+  const [customPicName, setCustomPicName] = useState<string>(initialDraft.customPicName || '');
 
-  // 4. Category tab: 'stop6' (Safety STOP-6) | '6s' (Framework 6S) | 'security-brand' (Securit Brand Aspect)
+  // 4. Category tab: 'stop6' (Safety STOP-6) | '6s' (Framework 6S) | 'security-brand' (Security Brand Aspect)
   const [activeCategory, setActiveCategory] = useState<ChecksheetCategoryTab>('stop6');
 
   // Automatically switch away from 'security-brand' if supermarket sub-area is chosen (no security brand checksheet in supermarket)
@@ -1805,10 +1843,42 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   }, [selectedAreaId, selectedDistribusiSubArea, activeCategory]);
 
   // 5. Scoring states: key = `${uniqueAreaKey}-${category}-${checkpointId}`, value = 1 (Aman) | 0 (Bahaya)
-  const [scores, setScores] = useState<Record<string, 1 | 0>>({});
+  const [scores, setScores] = useState<Record<string, 1 | 0>>(initialDraft.scores || {});
 
   // 6. In-place Draft Finding input for each checkpoint item
-  const [draftFindings, setDraftFindings] = useState<Record<string, ItemFindingDraft>>({});
+  const [draftFindings, setDraftFindings] = useState<Record<string, ItemFindingDraft>>(initialDraft.draftFindings || {});
+
+  // Persist draft state safely so tab switches / mobile reloads keep filled inputs
+  useEffect(() => {
+    const payload: StoredChecksheetDraft = {
+      assessorName,
+      customPicName,
+      scores,
+      draftFindings
+    };
+    try {
+      localStorage.setItem(CHECKSHEET_DRAFT_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // Fallback without oversized inline images if storage quota is tight
+      try {
+        const trimmedDrafts: Record<string, ItemFindingDraft> = {};
+        for (const [k, v] of Object.entries(draftFindings)) {
+          trimmedDrafts[k] = {
+            ...v,
+            photoUrl: v.photoUrl?.startsWith('data:image/') && v.photoUrl.length > 40000 ? '' : v.photoUrl
+          };
+        }
+        localStorage.setItem(CHECKSHEET_DRAFT_STORAGE_KEY, JSON.stringify({
+          assessorName,
+          customPicName,
+          scores,
+          draftFindings: trimmedDrafts
+        }));
+      } catch {
+        // ignore
+      }
+    }
+  }, [assessorName, customPicName, scores, draftFindings]);
 
   // 7. Notification alert banner with factory context
   const [alertInfo, setAlertInfo] = useState<{
@@ -1817,8 +1887,10 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
     factory: FactoryOption;
   } | null>(null);
 
-  // 8. Photo compression loading indicator
+  // 8. Photo compression & submission loading indicators
   const [compressingId, setCompressingId] = useState<string | null>(null);
+  const [savingItemId, setSavingItemId] = useState<string | null>(null);
+  const [isBulkSaving, setIsBulkSaving] = useState<boolean>(false);
 
   const isWarehouse = selectedAreaId === 'warehouse';
   const isDistribusi = selectedAreaId === 'distribusi';
@@ -1872,7 +1944,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
       [key]: score
     }));
 
-    // If score is 0 (Ada potensi bahaya / Tidak terpenuhi), initialize draft without pre-filling suggestion text
+    // If score is 0 (Ada potensi bahaya / Tidak terpenuhi), initialize draft so it is tracked as unsaved until submitted
     if (score === 0) {
       const item = currentCheckpoints.find(c => c.id === checkpointId);
       const isItem5R = activeCategory === '6s' || activeCategory === 'security-brand' || item?.category === '5R';
@@ -1885,18 +1957,20 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
             description: existing?.description || '',
             pic: existing?.pic || (customPicName.trim() || ''),
             assessor: existing?.assessor || (assessorName.trim() || ''),
-            priority: existing?.priority || item?.defaultPriority || 'High'
+            priority: existing?.priority || item?.defaultPriority || 'High',
+            savedFindingId: existing?.savedFindingId,
+            savedTime: existing?.savedTime,
+            dirty: existing?.savedFindingId ? existing.dirty : true
           }
         };
       });
       setAlertInfo({
         message: isItem5R
-          ? `⚠️ Poin "${item?.title}" tidak terpenuhi. Silakan isi foto & tekan "Simpan ke Database Temuan" di kolom kanan.`
-          : `⚠️ Potensi Bahaya pada "${item?.title}". Silakan isi foto & tekan "Simpan ke Database Temuan" di kolom kanan.`,
+          ? `⚠️ Poin "${item?.title}" ditandai Tidak Terpenuhi. Lengkapi uraian/foto lalu tekan "Simpan ke Dashboard Temuan" atau tombol simpan di bawah layar.`
+          : `⚠️ Potensi Bahaya pada "${item?.title}". Lengkapi uraian/foto lalu tekan "Simpan ke Dashboard Temuan" atau tombol simpan di bawah layar.`,
         findingId: '',
         factory: selectedFactory
       });
-      setTimeout(() => setAlertInfo(null), 5000);
     }
   };
 
@@ -1904,18 +1978,20 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   const handleUpdateDraft = (checkpointId: string, field: keyof ItemFindingDraft, value: string) => {
     const key = getItemKey(checkpointId);
     setDraftFindings(prev => {
+      const item = currentCheckpoints.find(c => c.id === checkpointId);
       const existing = prev[key] || {
         photoUrl: '',
         description: '',
         pic: customPicName.trim() || '',
         assessor: assessorName.trim() || '',
-        priority: 'High'
+        priority: item?.defaultPriority || 'High'
       };
       return {
         ...prev,
         [key]: {
           ...existing,
-          [field]: value
+          [field]: value,
+          dirty: true
         }
       };
     });
@@ -1941,11 +2017,12 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
       reader.readAsDataURL(file);
     } finally {
       setCompressingId(null);
+      e.target.value = '';
     }
   };
 
-  // Save Finding directly into Global State
-  const handleSaveDraftAsFinding = (checkpoint: CheckpointItem) => {
+  // Build InspectionFinding object from a checkpoint item
+  const buildFindingFromCheckpoint = (checkpoint: CheckpointItem, uniqueSuffix?: number): InspectionFinding => {
     const key = getItemKey(checkpoint.id);
     const draft = draftFindings[key];
 
@@ -1955,57 +2032,146 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
     const priority = draft?.priority || checkpoint.defaultPriority;
     const findingAssessor = draft?.assessor?.trim() || assessorName.trim() || currentUser.name || 'Assessor Genba';
 
-    const newFindingId = `FND-2026-CHK-${Math.floor(100 + Math.random() * 900)}`;
+    const existingId = draft?.savedFindingId;
+    const uniqueNum = `${Date.now().toString().slice(-5)}${uniqueSuffix ?? Math.floor(10 + Math.random() * 90)}`;
+    const findingId = existingId || `FND-2026-CHK-${uniqueNum}`;
 
-    const newFinding: InspectionFinding = {
-      id: newFindingId,
+    return {
+      id: findingId,
       factory: selectedFactory,
       date: new Date().toISOString().split('T')[0],
       area: isWarehouse ? activeWarehouseSubArea.name : isDistribusi ? `Distribusi - ${activeSubArea.name}` : mainArea.name,
       finding: description ? `[Checksheet ${checkpoint.code} - ${checkpoint.title}] ${description}` : `[Checksheet ${checkpoint.code} - ${checkpoint.title}]`,
       category: checkpoint.category,
-      pic: pic,
+      pic,
       department: isDistribusi ? 'Distribusi' : mainArea.department,
       correctiveAction: 'Menunggu analisis tindakan korektif PIC & tim Genba',
       status: 'Open',
       targetDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       attachmentUrl: photoUrl,
-      priority: priority,
+      priority,
       inspectorName: findingAssessor,
       recordedBy: findingAssessor,
-      weekNumber: 38,
-      hierarchyLevel: 'bi-monthly'
+      weekNumber: getCurrentIsoWeek(),
+      hierarchyLevel: 'bi-monthly',
+      createdAt: Date.now() + (uniqueSuffix || 0)
     };
+  };
 
-    onSaveFinding(newFinding);
-    onSelectFactory?.(selectedFactory);
+  // Save Single Finding directly into Shared Database & Dashboard
+  const handleSaveDraftAsFinding = async (checkpoint: CheckpointItem) => {
+    if (compressingId === checkpoint.id || savingItemId === checkpoint.id || isBulkSaving) return;
 
-    // Update draft to indicate saved state
-    setDraftFindings(prev => ({
-      ...prev,
-      [key]: {
-        ...(prev[key] || { photoUrl, description, pic, priority }),
-        photoUrl,
-        description,
-        pic,
-        assessor: findingAssessor,
-        priority,
-        savedFindingId: newFindingId,
-        savedTime: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    const key = getItemKey(checkpoint.id);
+    const newFinding = buildFindingFromCheckpoint(checkpoint);
+    const savedTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+    setSavingItemId(checkpoint.id);
+    try {
+      await onSaveFinding(newFinding);
+      onSelectFactory?.(selectedFactory);
+
+      // Update draft to indicate saved state
+      setDraftFindings(prev => ({
+        ...prev,
+        [key]: {
+          ...(prev[key] || {
+            photoUrl: newFinding.attachmentUrl,
+            description: '',
+            pic: newFinding.pic,
+            priority: newFinding.priority
+          }),
+          photoUrl: newFinding.attachmentUrl,
+          pic: newFinding.pic,
+          assessor: newFinding.inspectorName,
+          priority: newFinding.priority,
+          savedFindingId: newFinding.id,
+          savedTime,
+          dirty: false
+        }
+      }));
+
+      // Auto mark score to 0 (Ada potensi bahaya / Tidak terpenuhi)
+      setScores(prev => ({
+        ...prev,
+        [key]: 0
+      }));
+
+      setAlertInfo({
+        message: `✓ Temuan #${newFinding.id} berhasil masuk ke Dashboard (${selectedFactory})!`,
+        findingId: newFinding.id,
+        factory: selectedFactory
+      });
+    } finally {
+      setSavingItemId(null);
+    }
+  };
+
+  // Unsaved items in the current checksheet view (marked '0' or edited draft not yet synced to Dashboard)
+  const unsavedCheckpoints = currentCheckpoints.filter((chk) => {
+    const key = getItemKey(chk.id);
+    const score = scores[key];
+    const draft = draftFindings[key];
+    const isMarkedZeroAndUnsaved = score === 0 && (!draft?.savedFindingId || draft?.dirty);
+    const hasEditedContent = Boolean(draft?.dirty && (draft.description.trim() || draft.photoUrl));
+    return isMarkedZeroAndUnsaved || hasEditedContent;
+  });
+
+  // Bulk save all unsaved items in current checksheet
+  const handleSaveAllUnsavedFindings = async () => {
+    if (unsavedCheckpoints.length === 0 || isBulkSaving || compressingId) return;
+
+    setIsBulkSaving(true);
+    try {
+      const builtFindings = unsavedCheckpoints.map((chk, idx) => buildFindingFromCheckpoint(chk, idx + 10));
+      const savedTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+      if (onSaveMultipleFindings) {
+        await onSaveMultipleFindings(builtFindings);
+      } else {
+        for (const f of builtFindings) {
+          await onSaveFinding(f);
+        }
       }
-    }));
+      onSelectFactory?.(selectedFactory);
 
-    // Auto mark score to 0 (Ada potensi bahaya)
-    setScores(prev => ({
-      ...prev,
-      [key]: 0
-    }));
+      setDraftFindings(prev => {
+        const next = { ...prev };
+        unsavedCheckpoints.forEach((chk, idx) => {
+          const key = getItemKey(chk.id);
+          const built = builtFindings[idx];
+          const existing = next[key];
+          next[key] = {
+            photoUrl: existing?.photoUrl || built.attachmentUrl,
+            description: existing?.description || '',
+            pic: existing?.pic || built.pic,
+            assessor: existing?.assessor || built.inspectorName,
+            priority: existing?.priority || built.priority,
+            savedFindingId: built.id,
+            savedTime,
+            dirty: false
+          };
+        });
+        return next;
+      });
 
-    setAlertInfo({
-      message: `Temuan #${newFindingId} berhasil dicatat untuk unit "${selectedFactory}"!`,
-      findingId: newFindingId,
-      factory: selectedFactory
-    });
+      setScores(prev => {
+        const next = { ...prev };
+        unsavedCheckpoints.forEach((chk) => {
+          next[getItemKey(chk.id)] = 0;
+        });
+        return next;
+      });
+
+      const lastSavedId = builtFindings[builtFindings.length - 1]?.id || '';
+      setAlertInfo({
+        message: `✅ ${builtFindings.length} temuan checksheet berhasil tersimpan ke Dashboard (${selectedFactory})!`,
+        findingId: lastSavedId,
+        factory: selectedFactory
+      });
+    } finally {
+      setIsBulkSaving(false);
+    }
   };
 
   // Summary Metrics for Active Sheet
@@ -2031,7 +2197,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-32">
       {/* Top Banner Alert if any */}
       {alertInfo && (
         <div className={`p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-in fade-in border-2 ${
@@ -2056,7 +2222,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
               <p className="text-[11px] opacity-80 mt-0.5 font-medium">
                 {alertInfo.findingId ? (
                   <span>
-                    Temuan otomatis tersimpan di database unit <strong className="font-extrabold underline">{alertInfo.factory}</strong>.
+                    Temuan otomatis tersimpan ke database pusat untuk unit <strong className="font-extrabold underline">{alertInfo.factory}</strong> &amp; tampil di Dashboard.
                   </span>
                 ) : (
                   <span>
@@ -2066,7 +2232,17 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          <div className="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-auto">
+            {alertInfo.findingId && onNavigateToDashboard && (
+              <button
+                type="button"
+                onClick={onNavigateToDashboard}
+                className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-black rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Buka Dashboard</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
             {alertInfo.findingId && onNavigateToFactoryDashboard && (
               <button
                 type="button"
@@ -2074,7 +2250,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                 className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-black rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Building2 className="w-3.5 h-3.5" />
-                <span>Buka Factory Dashboard ({alertInfo.factory})</span>
+                <span>Factory Dashboard ({alertInfo.factory})</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             )}
@@ -2856,17 +3032,21 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
 
                   {/* RIGHT SIDE: "Item temuan" Input Box (Sesuai Kotak di Gambar) */}
                   <div className="lg:col-span-5 space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
                       <span className="text-xs font-black text-slate-900 italic tracking-wide">
                         Item temuan
                       </span>
-                      {draft?.savedFindingId ? (
-                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded">
-                          ✓ Tersimpan di Genba ({draft.savedTime || 'Terkirim'})
+                      {draft?.savedFindingId && !draft?.dirty ? (
+                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
+                          ✓ Tersimpan di Dashboard ({draft.savedTime || 'Terkirim'})
+                        </span>
+                      ) : isHazard || draft?.dirty ? (
+                        <span className="text-[10px] text-rose-800 font-extrabold bg-rose-100 px-2 py-0.5 rounded border border-rose-300">
+                          ⚠️ Belum disimpan ke Dashboard
                         </span>
                       ) : (
                         <span className="text-[10px] text-slate-400">
-                          {isHazard ? '⚠️ Perlu Dokumentasi Foto' : 'Opsional jika ada catatan'}
+                          Opsional jika ada catatan
                         </span>
                       )}
                     </div>
@@ -2972,7 +3152,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                           rows={2}
                           value={draft?.description || ''}
                           onChange={(e) => handleUpdateDraft(chk.id, 'description', e.target.value)}
-                          placeholder=""
+                          placeholder="Ketik temuan lapangan di sini..."
                           className="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-1 focus:ring-amber-500 focus:border-amber-500 bg-white placeholder:text-slate-400 leading-relaxed"
                         />
                       </div>
@@ -2990,7 +3170,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                         </label>
                         <input
                           type="text"
-                          value={draft?.assessor || assessorName}
+                          value={draft?.assessor !== undefined ? draft.assessor : assessorName}
                           onChange={(e) => handleUpdateDraft(chk.id, 'assessor', e.target.value)}
                           placeholder="Nama Assessor yang menemukan temuan..."
                           className="w-full px-2.5 py-1.5 text-xs font-bold border border-amber-300 rounded-lg bg-amber-50/30 text-slate-900 focus:bg-white focus:ring-1 focus:ring-amber-500"
@@ -3029,25 +3209,51 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                       </div>
 
                       {/* Tombol Simpan ke Temuan Genba */}
-                      <div className="pt-1">
+                      <div className="pt-1 space-y-1.5">
                         <button
                           type="button"
+                          disabled={compressingId === chk.id || savingItemId === chk.id || isBulkSaving}
                           onClick={() => handleSaveDraftAsFinding(chk)}
-                          className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer ${
-                            draft?.savedFindingId
-                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          className={`w-full py-2.5 px-3 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 ${
+                            compressingId === chk.id || savingItemId === chk.id || isBulkSaving
+                              ? 'bg-slate-400 text-white cursor-wait'
+                              : draft?.savedFindingId && !draft?.dirty
+                              ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+                              : draft?.savedFindingId && draft?.dirty
+                              ? 'bg-amber-600 hover:bg-amber-700 text-white ring-2 ring-amber-400/40 cursor-pointer'
                               : isHazard
-                              ? 'bg-rose-600 hover:bg-rose-700 text-white ring-2 ring-rose-400/40'
-                              : 'bg-amber-600 hover:bg-amber-700 text-white'
+                              ? 'bg-rose-600 hover:bg-rose-700 text-white ring-2 ring-rose-400/40 cursor-pointer'
+                              : 'bg-amber-600 hover:bg-amber-700 text-white cursor-pointer'
                           }`}
                         >
-                          <Check className="w-3.5 h-3.5" />
+                          {compressingId === chk.id || savingItemId === chk.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Check className="w-3.5 h-3.5" />
+                          )}
                           <span>
-                            {draft?.savedFindingId
-                              ? `✓ Masuk di Dashboard (#${draft.savedFindingId})`
+                            {compressingId === chk.id
+                              ? 'Menunggu proses foto selesai...'
+                              : savingItemId === chk.id
+                              ? 'Menyimpan ke Dashboard...'
+                              : draft?.savedFindingId && !draft?.dirty
+                              ? `✓ Tersimpan di Dashboard (#${draft.savedFindingId})`
+                              : draft?.savedFindingId && draft?.dirty
+                              ? 'Simpan Perubahan ke Dashboard'
                               : 'Simpan ke Database Temuan'}
                           </span>
                         </button>
+
+                        {draft?.savedFindingId && !draft?.dirty && onNavigateToDashboard && (
+                          <button
+                            type="button"
+                            onClick={onNavigateToDashboard}
+                            className="w-full py-1.5 px-3 rounded-lg text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <span>Lihat temuan di Dashboard</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
 
                     </div>
@@ -3058,6 +3264,40 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
             );
           })}
         </div>
+
+        {/* Bulk Submit & Footer Summary */}
+        {unsavedCheckpoints.length > 0 && (
+          <div className="p-4 rounded-2xl bg-rose-50 border-2 border-rose-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
+            <div className="flex items-start sm:items-center gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5 sm:mt-0" />
+              <div>
+                <p className="text-xs sm:text-sm font-black text-rose-950">
+                  Ada {unsavedCheckpoints.length} poin temuan belum tersimpan ke Dashboard
+                </p>
+                <p className="text-[11px] text-rose-800 font-medium">
+                  Tekan tombol di sebelah kanan agar seluruh poin temuan (skor 0 / catatan) langsung tercatat ke Dashboard &amp; Tabel Inspeksi.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              disabled={isBulkSaving || Boolean(compressingId)}
+              onClick={handleSaveAllUnsavedFindings}
+              className="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-400 text-white text-xs sm:text-sm font-black rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            >
+              {isBulkSaving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+              <span>
+                {isBulkSaving
+                  ? 'Menyimpan...'
+                  : `Simpan Semua Temuan ke Dashboard (${unsavedCheckpoints.length})`}
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* Footer of the checksheet: Sign-off & summary */}
         <div className="pt-6 border-t-2 border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
@@ -3088,20 +3328,67 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                 {currentUser.name} ({new Date().toLocaleDateString('id-ID')})
               </p>
             </div>
-            {onGoToInspectionTable && (
-              <button
-                type="button"
-                onClick={onGoToInspectionTable}
-                className="text-amber-700 hover:text-amber-800 font-bold text-[11px] flex items-center gap-1 mt-2 cursor-pointer"
-              >
-                <span>Lihat semua temuan di Tabel Inspeksi</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              {onNavigateToDashboard && (
+                <button
+                  type="button"
+                  onClick={onNavigateToDashboard}
+                  className="text-slate-900 hover:text-amber-700 font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Buka Dashboard</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {onGoToInspectionTable && (
+                <button
+                  type="button"
+                  onClick={onGoToInspectionTable}
+                  className="text-amber-700 hover:text-amber-800 font-bold text-[11px] flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Lihat Tabel Inspeksi</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
       </div>
+
+      {/* Sticky Floating Mobile Bar for Unsaved Checksheet Findings */}
+      {unsavedCheckpoints.length > 0 && (
+        <div className="no-print fixed bottom-3 left-3 right-3 z-40 sm:left-auto sm:right-6 sm:w-auto sm:min-w-[380px]">
+          <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-2xl border border-amber-500/50 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-black text-amber-300 truncate">
+                {unsavedCheckpoints.length} Temuan Belum Tersimpan
+              </p>
+              <p className="text-[10px] text-slate-300 truncate">
+                Unit: {selectedFactory} &bull; {currentAreaDisplayName}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={isBulkSaving || Boolean(compressingId)}
+              onClick={handleSaveAllUnsavedFindings}
+              className="px-3.5 py-2.5 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 disabled:bg-slate-600 text-white text-xs font-black rounded-xl shadow-md transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+            >
+              {isBulkSaving || compressingId ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4" />
+              )}
+              <span>
+                {compressingId
+                  ? 'Proses Foto...'
+                  : isBulkSaving
+                  ? 'Menyimpan...'
+                  : `Simpan ke Dashboard (${unsavedCheckpoints.length})`}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

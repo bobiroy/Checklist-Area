@@ -101,18 +101,17 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
     const deptLower = (f.department || '').toLowerCase();
     const textLower = (f.finding || '').toLowerCase();
 
-    // 1. Distribusi & Sub-areas: PPA, Supermarket, Heat Transfer
+    // 1. Explicit Distribusi & Sub-areas by area or department first
     if (
       areaLower.includes('distribusi') ||
       deptLower.includes('distribusi') ||
       areaLower.includes('ppa') ||
       deptLower.includes('ppa') ||
-      textLower.includes('ppa') ||
       areaLower.includes('supermarket') ||
       areaLower.includes('heat transfer') ||
       areaLower.includes('transfer bundle')
     ) {
-      if (areaLower.includes('ppa') || textLower.includes('ppa') || deptLower.includes('ppa')) {
+      if (areaLower.includes('ppa') || deptLower.includes('ppa') || textLower.includes('ppa')) {
         return { mainArea: 'Distribusi', distribusiSub: 'PPA' };
       }
       if (areaLower.includes('heat') || textLower.includes('heat transfer')) {
@@ -121,7 +120,7 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
       return { mainArea: 'Distribusi', distribusiSub: 'Supermarket' };
     }
 
-    // 2. Warehouse
+    // 2. Explicit Warehouse
     if (
       areaLower.includes('warehouse') ||
       deptLower.includes('warehouse') ||
@@ -132,7 +131,7 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
       return { mainArea: 'Warehouse' };
     }
 
-    // 3. Cutting
+    // 3. Explicit Cutting
     if (
       areaLower.includes('cutting') ||
       deptLower.includes('cutting') ||
@@ -143,7 +142,7 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
       return { mainArea: 'Cutting' };
     }
 
-    // 4. Sewing
+    // 4. Explicit Sewing
     if (
       areaLower.includes('sewing') ||
       deptLower.includes('sewing') ||
@@ -153,7 +152,7 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
       return { mainArea: 'Sewing' };
     }
 
-    // 5. Finish Good / Finishing Packing
+    // 5. Explicit Finish Good / Finishing Packing
     if (
       areaLower.includes('finish') ||
       deptLower.includes('finish') ||
@@ -164,6 +163,14 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
       areaLower.includes('metal detector')
     ) {
       return { mainArea: 'Finish Good' };
+    }
+
+    // 6. Fallback text matching for legacy/freeform entries
+    if (textLower.includes('ppa')) {
+      return { mainArea: 'Distribusi', distribusiSub: 'PPA' };
+    }
+    if (textLower.includes('heat transfer')) {
+      return { mainArea: 'Distribusi', distribusiSub: 'Heat Transfer' };
     }
 
     return { mainArea: 'Warehouse' };

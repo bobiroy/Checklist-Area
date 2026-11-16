@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Header } from './components/Header';
 import { DashboardView } from './components/DashboardView';
 import { InspectionTableView } from './components/InspectionTableView';
@@ -11,11 +11,12 @@ import { ResetConfirmModal } from './components/ResetConfirmModal';
 import { LoginModal } from './components/LoginModal';
 import { LoginScreen } from './components/LoginScreen';
 import { ActiveTab, InspectionFinding, FindingStatus, FindingCategory, FactoryOption, UserAccount } from './types';
-import { INITIAL_FINDINGS, SYSTEM_ACCOUNTS } from './data/mockData';
+import { INITIAL_FINDINGS } from './data/mockData';
 import { CheckCircle2 } from 'lucide-react';
 
 const STORAGE_KEY = 'factory_genba_findings_v1';
 const USER_STORAGE_KEY = 'factory_genba_user_session_v1';
+const INITIAL_MOCK_IDS = new Set(INITIAL_FINDINGS.map((f) => f.id));
 
 const normalizeCategory = (cat: string): FindingCategory => {
   if (cat === '5R' || cat === '5S & Housekeeping') return '5R';
@@ -39,23 +40,50 @@ const normalizeDepartment = (dept?: string): string => {
   return 'Warehouse';
 };
 
+const normalizeFinding = (item: InspectionFinding): InspectionFinding => ({
+  ...item,
+  category: normalizeCategory(item.category),
+  department: normalizeDepartment(item.department)
+});
+
+const normalizeFindingsList = (items: InspectionFinding[]): InspectionFinding[] =>
+  items.map(normalizeFinding);
+
+const saveToLocalStorageSafe = (items: InspectionFinding[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    // Jika kuota localStorage penuh (misalnya banyak foto resolusi tinggi),
+    // simpan metadata tanpa data URL gambar besar agar tidak membuang data temuan.
+    try {
+      const compact = items.map((item) => ({
+        ...item,
+        attachmentUrl: item.attachmentUrl?.startsWith('data:image/') && item.attachmentUrl.length > 50000
+          ? ''
+          : item.attachmentUrl,
+        attachmentAfterUrl: item.attachmentAfterUrl?.startsWith('data:image/') && item.attachmentAfterUrl.length > 50000
+          ? ''
+          : item.attachmentAfterUrl
+      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(compact));
+    } catch {
+      // Abaikan jika browser memblokir storage
+    }
+  }
+};
+
 export default function App() {
   // Navigation: Default to 'dashboard' as landing page
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
 
-  // Persistence of inspection findings
+  // Persistence of inspection findings (localStorage fallback cache before server sync)
   const [findings, setFindings] = useState<InspectionFinding[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Normalize categories and departments
-          return parsed.map((item: InspectionFinding) => ({
-            ...item,
-            category: normalizeCategory(item.category),
-            department: normalizeDepartment(item.department)
-          }));
+          return normalizeFindingsList(parsed);
         }
       }
     } catch {
@@ -96,13 +124,106 @@ export default function App() {
   // Toast notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Save findings to localStorage
-  useEffect(() => {
+  const hasSyncedLocalCacheRef = useRef(false);
+  const isMutatingRef = useRef(false);
+
+  // Fetch findings from shared server API
+  const fetchFindingsFromServer = useCallback(async (allowLocalMigration = false) => {
+    if (isMutatingRef.current) return;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(findings));
+      const res = await fetch('/api/findings', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data?.findings)) return;
+
+      const serverFindings: InspectionFinding[] = normalizeFindingsList(data.findings);
+
+      // Migrate custom findings created offline/previously in localStorage if server still only has initial seed
+      if (allowLocalMigration && !hasSyncedLocalCacheRef.current) {
+        hasSyncedLocalCacheRef.current = true;
+        try {
+          const savedRaw = localStorage.getItem(STORAGE_KEY);
+          if (savedRaw) {
+            const parsedLocal = JSON.parse(savedRaw);
+            if (Array.isArray(parsedLocal)) {
+              const serverIds = new Set(serverFindings.map((f) => f.id));
+              const customUnsynced = parsedLocal.filter(
+                (f: InspectionFinding) => f?.id && f?.finding && !INITIAL_MOCK_IDS.has(f.id) && !serverIds.has(f.id)
+              );
+              const serverOnlyHasInitial = serverFindings.every((f) => INITIAL_MOCK_IDS.has(f.id));
+              if (customUnsynced.length > 0 && serverOnlyHasInitial) {
+                const batchRes = await fetch('/api/findings/batch', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ findings: normalizeFindingsList(customUnsynced) })
+                });
+                if (batchRes.ok) {
+                  const batchData = await batchRes.json();
+                  if (Array.isArray(batchData?.findings)) {
+                    const merged = normalizeFindingsList(batchData.findings);
+                    setFindings(merged);
+                    saveToLocalStorageSafe(merged);
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        } catch {
+          // ignore local migration error
+        }
+      }
+
+      if (!isMutatingRef.current) {
+        setFindings(serverFindings);
+        saveToLocalStorageSafe(serverFindings);
+      }
     } catch {
-      // ignore
+      // Offline / network fallback keeps local cache
     }
+  }, []);
+
+  // Initial load from server
+  useEffect(() => {
+    fetchFindingsFromServer(true);
+  }, [fetchFindingsFromServer]);
+
+  // Refetch when user navigates to dashboard or table views so HP/PC stay in sync
+  useEffect(() => {
+    if (!currentUser) return;
+    if (activeTab === 'dashboard' || activeTab === 'factory-dashboard' || activeTab === 'leadership-walkthrough' || activeTab === 'management-structure') {
+      fetchFindingsFromServer(false);
+    }
+  }, [activeTab, currentUser, fetchFindingsFromServer]);
+
+  // Background polling & tab visibility sync across devices (HP <-> Desktop)
+  useEffect(() => {
+    if (!currentUser) return;
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchFindingsFromServer(false);
+      }
+    }, 5000);
+
+    const handleFocusOrVisible = () => {
+      if (document.visibilityState === 'visible') {
+        fetchFindingsFromServer(false);
+      }
+    };
+
+    window.addEventListener('focus', handleFocusOrVisible);
+    document.addEventListener('visibilitychange', handleFocusOrVisible);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocusOrVisible);
+      document.removeEventListener('visibilitychange', handleFocusOrVisible);
+    };
+  }, [currentUser, fetchFindingsFromServer]);
+
+  // Keep localStorage backup cache synced
+  useEffect(() => {
+    saveToLocalStorageSafe(findings);
   }, [findings]);
 
   // Show temporary toast
@@ -139,8 +260,8 @@ export default function App() {
     setIsLoginModalOpen(true);
   };
 
-  // Add / Edit submission: Seluruh temuan otomatis masuk ke BI Genba ('bi-monthly')
-  const handleSaveFinding = (finding: InspectionFinding) => {
+  // Add / Edit submission: Seluruh temuan otomatis masuk ke BI Genba ('bi-monthly') dan tersimpan ke database server
+  const handleSaveFinding = async (finding: InspectionFinding) => {
     // Role check: Only admin can save finding with status Closed
     if (finding.status === 'Closed' && currentUser?.role !== 'admin') {
       showToast('⚠️ Akses Ditolak: Hanya Admin yang dapat membuat temuan Close.');
@@ -148,71 +269,192 @@ export default function App() {
       return;
     }
 
-    const findingWithBI: InspectionFinding = {
+    const findingWithBI: InspectionFinding = normalizeFinding({
       ...finding,
-      hierarchyLevel: 'bi-monthly'
-    };
+      hierarchyLevel: 'bi-monthly',
+      createdAt: finding.createdAt || Date.now()
+    });
 
     if (finding.factory) {
       setActiveFactory(finding.factory);
     }
 
+    let isUpdate = false;
     setFindings((prev) => {
       const existsIndex = prev.findIndex((f) => f.id === findingWithBI.id);
       if (existsIndex >= 0) {
+        isUpdate = true;
         const updated = [...prev];
         updated[existsIndex] = findingWithBI;
-        showToast(`Temuan ${findingWithBI.id} berhasil diperbarui.`);
         return updated;
-      } else {
-        showToast(`Temuan baru ${findingWithBI.id} berhasil dicatat.`);
-        return [findingWithBI, ...prev];
       }
+      return [findingWithBI, ...prev];
     });
     setEditingFinding(null);
+
+    isMutatingRef.current = true;
+    try {
+      const res = await fetch('/api/findings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(findingWithBI)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.findings)) {
+          const synced = normalizeFindingsList(data.findings);
+          setFindings(synced);
+          saveToLocalStorageSafe(synced);
+        }
+        showToast(
+          isUpdate
+            ? `Temuan ${findingWithBI.id} berhasil diperbarui ke Dashboard.`
+            : `Temuan baru ${findingWithBI.id} berhasil tersimpan ke Dashboard.`
+        );
+      } else {
+        showToast(`⚠️ Temuan ${findingWithBI.id} tersimpan lokal, namun gagal sinkron ke server.`);
+      }
+    } catch {
+      showToast(`⚠️ Koneksi terganggu. Temuan ${findingWithBI.id} tersimpan di perangkat ini.`);
+    } finally {
+      isMutatingRef.current = false;
+    }
+  };
+
+  // Batch save multiple findings from Checksheet
+  const handleSaveMultipleFindings = async (incomingFindings: InspectionFinding[]) => {
+    if (!incomingFindings || incomingFindings.length === 0) return;
+
+    const validFindings: InspectionFinding[] = [];
+    for (const f of incomingFindings) {
+      if (f.status === 'Closed' && currentUser?.role !== 'admin') {
+        showToast('⚠️ Akses Ditolak: Hanya Admin yang dapat membuat temuan Close.');
+        handleOpenLoginWithReason('Hanya akun Admin yang berwenang menetapkan status Closed.');
+        return;
+      }
+      validFindings.push(
+        normalizeFinding({
+          ...f,
+          hierarchyLevel: 'bi-monthly',
+          createdAt: f.createdAt || Date.now()
+        })
+      );
+    }
+
+    const lastFactory = validFindings[validFindings.length - 1]?.factory;
+    if (lastFactory) {
+      setActiveFactory(lastFactory);
+    }
+
+    setFindings((prev) => {
+      const next = [...prev];
+      for (let i = validFindings.length - 1; i >= 0; i--) {
+        const item = validFindings[i];
+        const idx = next.findIndex((existing) => existing.id === item.id);
+        if (idx >= 0) {
+          next[idx] = item;
+        } else {
+          next.unshift(item);
+        }
+      }
+      return next;
+    });
+
+    isMutatingRef.current = true;
+    try {
+      const res = await fetch('/api/findings/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ findings: validFindings })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.findings)) {
+          const synced = normalizeFindingsList(data.findings);
+          setFindings(synced);
+          saveToLocalStorageSafe(synced);
+        }
+        showToast(`✅ ${validFindings.length} temuan checksheet berhasil tersimpan ke Dashboard.`);
+      } else {
+        showToast(`⚠️ ${validFindings.length} temuan tersimpan lokal, namun gagal sinkron ke server.`);
+      }
+    } catch {
+      showToast(`⚠️ Koneksi terganggu. ${validFindings.length} temuan tersimpan di perangkat ini.`);
+    } finally {
+      isMutatingRef.current = false;
+    }
   };
 
   // Delete finding
-  const handleDeleteFinding = (id: string) => {
-    setFindings((prev) => {
-      const updated = prev.filter((f) => f.id !== id);
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      } catch {
-        // ignore
+  const handleDeleteFinding = async (id: string) => {
+    setFindings((prev) => prev.filter((f) => f.id !== id));
+
+    isMutatingRef.current = true;
+    try {
+      const res = await fetch(`/api/findings/${encodeURIComponent(id)}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.findings)) {
+          const synced = normalizeFindingsList(data.findings);
+          setFindings(synced);
+          saveToLocalStorageSafe(synced);
+        }
       }
-      return updated;
-    });
+    } catch {
+      // ignore network error
+    } finally {
+      isMutatingRef.current = false;
+    }
     showToast(`Temuan ${id} telah dihapus.`);
   };
 
   // Delete multiple findings
-  const handleDeleteMultipleFindings = (ids: string[]) => {
-    setFindings((prev) => {
-      const updated = prev.filter((f) => !ids.includes(f.id));
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      } catch {
-        // ignore
+  const handleDeleteMultipleFindings = async (ids: string[]) => {
+    setFindings((prev) => prev.filter((f) => !ids.includes(f.id)));
+
+    isMutatingRef.current = true;
+    try {
+      const res = await fetch('/api/findings/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.findings)) {
+          const synced = normalizeFindingsList(data.findings);
+          setFindings(synced);
+          saveToLocalStorageSafe(synced);
+        }
       }
-      return updated;
-    });
+    } catch {
+      // ignore
+    } finally {
+      isMutatingRef.current = false;
+    }
     showToast(`${ids.length} temuan berhasil dihapus.`);
   };
 
   // Clear all findings
-  const handleClearAllFindings = () => {
+  const handleClearAllFindings = async () => {
     setFindings([]);
+    saveToLocalStorageSafe([]);
+
+    isMutatingRef.current = true;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+      await fetch('/api/findings', { method: 'DELETE' });
     } catch {
       // ignore
+    } finally {
+      isMutatingRef.current = false;
     }
     showToast('Seluruh temuan pada tabel berhasil dihapus.');
   };
 
   // Quick inline status update
-  const handleQuickUpdateStatus = (id: string, newStatus: FindingStatus) => {
+  const handleQuickUpdateStatus = async (id: string, newStatus: FindingStatus) => {
     // Strict Guard: Hanya Admin yang dapat membuat temuan status Closed
     if (newStatus === 'Closed' && currentUser?.role !== 'admin') {
       showToast('⚠️ Akses Ditolak: Hanya Admin yang dapat membuat temuan Close.');
@@ -220,18 +462,44 @@ export default function App() {
       return;
     }
 
+    const existing = findings.find((f) => f.id === id);
+    const nextCloseDate = newStatus === 'Closed'
+      ? (existing?.closeDate || new Date().toISOString().split('T')[0])
+      : existing?.closeDate;
+
     setFindings((prev) =>
       prev.map((item) => {
         if (item.id === id) {
           return {
             ...item,
             status: newStatus,
-            closeDate: newStatus === 'Closed' ? (item.closeDate || new Date().toISOString().split('T')[0]) : item.closeDate
+            closeDate: nextCloseDate
           };
         }
         return item;
       })
     );
+
+    isMutatingRef.current = true;
+    try {
+      const res = await fetch(`/api/findings/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, closeDate: nextCloseDate })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.findings)) {
+          const synced = normalizeFindingsList(data.findings);
+          setFindings(synced);
+          saveToLocalStorageSafe(synced);
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      isMutatingRef.current = false;
+    }
     showToast(`Status temuan ${id} diubah menjadi: ${newStatus}`);
   };
 
@@ -240,9 +508,26 @@ export default function App() {
     setIsResetModalOpen(true);
   };
 
-  const performResetData = () => {
+  const performResetData = async () => {
     setFindings(INITIAL_FINDINGS);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_FINDINGS));
+    saveToLocalStorageSafe(INITIAL_FINDINGS);
+
+    isMutatingRef.current = true;
+    try {
+      const res = await fetch('/api/findings/reset', { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.findings)) {
+          const synced = normalizeFindingsList(data.findings);
+          setFindings(synced);
+          saveToLocalStorageSafe(synced);
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      isMutatingRef.current = false;
+    }
     showToast('Data temuan berhasil di-reset ke data bawaan.');
   };
 
@@ -328,8 +613,10 @@ export default function App() {
             selectedFactory={activeFactory}
             onSelectFactory={setActiveFactory}
             onSaveFinding={handleSaveFinding}
+            onSaveMultipleFindings={handleSaveMultipleFindings}
             onSelectPhotoProof={(finding) => setPhotoProofFinding(finding)}
             onGoToInspectionTable={() => setActiveTab('leadership-walkthrough')}
+            onNavigateToDashboard={() => setActiveTab('dashboard')}
             onNavigateToFactoryDashboard={(factory) => {
               setActiveFactory(factory);
               setActiveTab('factory-dashboard');

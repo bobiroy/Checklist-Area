@@ -100,6 +100,7 @@ export interface InspectionFinding {
   notes?: string;
   progressNotes?: string; // Catatan progress perbaikan yang sedang berjalan
   impactScore?: string; // e.g. "Eliminasi potensi cedera tangan", "Reduksi cycle time 4.2s"
+  createdAt?: number; // Unix timestamp saat temuan dibuat
 }
 
 export interface DepartmentInfo {

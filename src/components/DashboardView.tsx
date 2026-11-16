@@ -143,7 +143,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Recent findings across all factories
   const recentFindings = React.useMemo(() => {
     return [...findings]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      })
       .slice(0, 6);
   }, [findings]);
 
