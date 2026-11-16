@@ -435,6 +435,8 @@ export const SAMPLE_PHOTO_PRESETS = [
 ];
 
 export const FACTORY_AREAS = [
+  'Warehouse Accessories',
+  'Warehouse Fabric',
   'Warehouse - Fabric Roll Storage (Gudang Kain)',
   'Warehouse - Trims & Accessories Room',
   'Warehouse - Finished Goods Export Bay',

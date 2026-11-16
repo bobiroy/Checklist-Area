@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ShieldAlert, 
   Camera, 
@@ -27,14 +27,24 @@ import {
   Store,
   UserCheck,
   User,
-  Loader2
+  Loader2,
+  Lock,
+  Search,
+  Wrench,
+  RotateCcw,
+  Coffee,
+  DoorOpen,
+  FileText,
+  ShieldCheck,
+  Clock,
+  Bell
 } from 'lucide-react';
 import { InspectionFinding, FactoryOption, FindingCategory, PriorityLevel, UserAccount } from '../types';
-import { SAMPLE_PHOTO_PRESETS } from '../data/mockData';
 import { compressImageFile } from '../utils/imageCompressor';
 
 export type ChecksheetAreaId = 'warehouse' | 'cutting' | 'distribusi' | 'sewing' | 'finish-good';
 export type DistribusiSubAreaId = 'ppa' | 'supermarket' | 'heat-transfer';
+export type WarehouseSubAreaId = 'warehouse-accessories' | 'warehouse-fabric';
 
 export interface ChecksheetAreaConfig {
   id: ChecksheetAreaId;
@@ -58,6 +68,16 @@ export interface DistribusiSubAreaConfig {
   description: string;
 }
 
+export interface WarehouseSubAreaConfig {
+  id: WarehouseSubAreaId;
+  name: string;
+  fullTitle: string;
+  boxTitle: string;
+  defaultPic: string;
+  icon: React.ElementType;
+  description: string;
+}
+
 export interface CheckpointItem {
   id: string;
   code: string; // 'A', 'B', 'C', 'D', 'E', 'F'
@@ -68,6 +88,7 @@ export interface CheckpointItem {
   questionEn: string;
   defaultPriority: PriorityLevel;
   suggestedFinding: string;
+  pillar?: string;
 }
 
 // 5 Main Areas Sesuai Permintaan User:
@@ -81,7 +102,8 @@ const CHECK_AREAS: ChecksheetAreaConfig[] = [
     defaultPic: 'Agus Pratama (SPV Gudang & Logistik)',
     icon: Warehouse,
     badgeStyle: 'bg-amber-50 text-amber-700 border-amber-300',
-    description: 'Gudang penyimpanan roll kain utama, rak trims/aksesoris, staging box, dan jalur forklift/pallet.'
+    description: 'Departemen Gudang penyimpanan: Warehouse Accessories dan Warehouse Fabric.',
+    hasSubAreas: true
   },
   {
     id: 'cutting',
@@ -155,6 +177,29 @@ const DISTRIBUSI_SUB_AREAS: DistribusiSubAreaConfig[] = [
     defaultPic: 'Rudi Hartono (Leader Heat Transfer)',
     icon: Flame,
     description: 'Area mesin press heat transfer logo apparel, curing stiker merek, pengujian adhesi, dan suhu pemanas.'
+  }
+];
+
+// 2 Spesifik Sub-Area Warehouse Sesuai Instruksi User:
+// 1. Warehouse Accessories, 2. Warehouse Fabric
+const WAREHOUSE_SUB_AREAS: WarehouseSubAreaConfig[] = [
+  {
+    id: 'warehouse-accessories',
+    name: 'Warehouse Accessories',
+    fullTitle: 'Warehouse Accessories (Trims, Label & Metal Detector)',
+    boxTitle: 'WAREHOUSE ACCESSORIES AREA',
+    defaultPic: 'Anita Wijaya (SPV Accessories & Trims Warehouse)',
+    icon: Package,
+    description: 'Penyimpanan accessories, trims, zipper, button, benang, woven label, kancing, dan metal detector check.'
+  },
+  {
+    id: 'warehouse-fabric',
+    name: 'Warehouse Fabric',
+    fullTitle: 'Warehouse Fabric (Roll Kain, Staging & Relaxing)',
+    boxTitle: 'WAREHOUSE FABRIC AREA',
+    defaultPic: 'Agus Pratama (SPV Fabric Roll Storage & Logistik)',
+    icon: Warehouse,
+    description: 'Penerimaan dan penyimpanan roll kain utama, rak staging kain, relaksasi kain, dan jalur forklift/pallet.'
   }
 ];
 
@@ -298,6 +343,1396 @@ const SIX_S_CHECKPOINTS: CheckpointItem[] = [
   }
 ];
 
+// 10 Poin Pengecekan Khusus Warehouse pada Framework 6S
+export const WAREHOUSE_6S_CHECKPOINTS: CheckpointItem[] = [
+  {
+    id: 'wh-6s-1',
+    code: '1',
+    title: 'Area Penerimaan & Waiting Inspection',
+    icon: Layers,
+    category: '5R',
+    questionId: 'Area penerimaan dan waiting inspection material terpisah dengan tanda area yang jelas',
+    questionEn: '(Separate material receiving and waiting inspection areas are available with clearly marked areas)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-6s-2',
+    code: '2',
+    title: 'Penyimpanan Reject Material Terkunci',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Reject material diletakkan terpisah, tertutup, terkunci, dan datanya sesuai logbook',
+    questionEn: '(Reject material is placed separately, segregated, locked, and has the same amount as listed in logbook)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-6s-3',
+    code: '3',
+    title: 'Pemeriksaan Metal Detector Accessories',
+    icon: Search,
+    category: 'Quality',
+    questionId: 'Semua accessories dicek dengan Metal Detector (menyesuaikan dengan requirement buyer)',
+    questionEn: '(All accessories must be checked by Metal Detector (according to buyer\'s requirements))',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-6s-4',
+    code: '4',
+    title: 'Peralatan Bantu Metal, Toolbox & Logbook',
+    icon: Wrench,
+    category: '5R',
+    questionId: 'Peralatan bantu kerja berbahan metal di letakkan pada toolbox/ shadows box, terkunci, list alat sesuai, dokumentasi log book jelas.',
+    questionEn: '(Metal work tools are placed in the toolbox/shadows box, locked, tool list is appropriate, log book documentation is clear)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-6s-5',
+    code: '5',
+    title: 'Area Return Material dari Sewing',
+    icon: RotateCcw,
+    category: '5R',
+    questionId: 'Area return material  (pengembalian dari sewing) memiliki visualisasi jelas disertai dengan ID PO tersebut dan tertata rapi',
+    questionEn: '(The material return area has a clear visualization accompanied by the ID PO and is neatly arranged)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-6s-6',
+    code: '6',
+    title: 'Penempatan Alat Kerja, Botol & Alat Kebersihan',
+    icon: Coffee,
+    category: '5R',
+    questionId: 'Semua peralatan bantu kerja, botol minum dan alat kebersihan diletakkan pada tempat yang disediakan setelah digunakan',
+    questionEn: '(All working tools , drinking bottles and housekeeping tools are placed in the space provided after use)',
+    defaultPriority: 'Low',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-6s-7',
+    code: '7',
+    title: 'Kebersihan Debu, Sarang Laba-laba & Kotoran',
+    icon: Sparkles,
+    category: '5R',
+    questionId: 'Seluruh area bersih dari sarang laba-laba, debu dan kotoran',
+    questionEn: '(The entire area is clean from cobwebs, dust and dirt.)',
+    defaultPriority: 'Low',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-6s-8',
+    code: '8',
+    title: 'Jalur Evakuasi Bebas Rintangan (Clear Path)',
+    icon: DoorOpen,
+    category: 'Safety Stop 6',
+    questionId: 'Seluruh jalur evakuasi clear tidak terhalang material, palet, troli, box atau karton',
+    questionEn: '(All evacuation routes are clear and not obstructed by materials, pallets, trolley, box or carton)',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-6s-9',
+    code: '9',
+    title: 'Work Instruction (WI) untuk Semua Proses',
+    icon: FileText,
+    category: '5R',
+    questionId: 'Ada WI (Work Instruction) untuk semua proses kerja (penempatan tersentral/ atau per area). Terlihat jelas dan mudah dimengerti',
+    questionEn: '(There are WI (Work Instruction) for all work processes (placed centralized / per area). Looks clear and easy to understand)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-6s-10',
+    code: '10',
+    title: 'Kondisi & Perawatan Rak / Peralatan',
+    icon: CheckCircle2,
+    category: '5R',
+    questionId: 'Apakah seluruh rak / peralatan terawat dan tidak ditemukan kerusakan?',
+    questionEn: '(Are all shelves/equipment maintained and are there no damages found?)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  }
+];
+
+// 12 Poin Pengecekan Khusus Warehouse Fabric pada Framework 6S Sesuai Instruksi User
+export const WAREHOUSE_FABRIC_6S_CHECKPOINTS: CheckpointItem[] = [
+  {
+    id: 'wh-fab-1',
+    code: '1',
+    title: 'Area Penerimaan & Waiting Inspection',
+    icon: Layers,
+    category: '5R',
+    questionId: 'Area penerimaan dan waiting inspection material terpisah dengan tanda area yang jelas',
+    questionEn: '(Separate material receiving and waiting inspection areas are available with clearly marked areas)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-2',
+    code: '2',
+    title: 'Penyimpanan Reject Material Terkunci',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Reject material diletakkan terpisah, tertutup, terkunci, dan datanya sesuai logbook',
+    questionEn: '(Reject material is placed separately, segregated, locked, and has the same amount as listed in logbook)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-3',
+    code: '3',
+    title: 'Pemisahan Material Fast, Slow Moving & >2 Tahun',
+    icon: Clock,
+    category: '5R',
+    questionId: 'Material fast moving, slow moving dan lebih dari 2 tahun terpisah',
+    questionEn: '(Fast moving, slow moving and more than 2 years materials are separated)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-4',
+    code: '4',
+    title: 'Peralatan Bantu Metal, Toolbox & Logbook',
+    icon: Wrench,
+    category: '5R',
+    questionId: 'Peralatan bantu kerja berbahan metal di letakkan pada toolbox/ shadows box, terkunci, list alat sesuai, dokumentasi log book jelas.',
+    questionEn: '(Metal work tools are placed in the toolbox/shadows box, locked, tool list is appropriate, log book documentation is clear)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-5',
+    code: '5',
+    title: 'Area Return Material dari Sewing (ID Item Fabric)',
+    icon: RotateCcw,
+    category: '5R',
+    questionId: 'Area return material (pengembalian dari sewing) memiliki visualisasi jelas disertai dengan ID item Fabric tersebut dan tertata rapi',
+    questionEn: '(The material return area has a clear visualization accompanied by the ID of the fabric item and is neatly arranged)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-6',
+    code: '6',
+    title: 'Penempatan Forklift, Botol Minum & Alat Kebersihan',
+    icon: Coffee,
+    category: '5R',
+    questionId: 'Semua peralatan bantu (forklift), botol minum dan alat kebersihan diletakkan pada tempat yang disediakan setelah digunakan',
+    questionEn: '(All working tools, handling equipment (forklifts), drinking bottles and housekeeping tools are placed in the space provided after use)',
+    defaultPriority: 'Low',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-7',
+    code: '7',
+    title: 'Roll Fabric Tertutup Plastik',
+    icon: ShieldCheck,
+    category: '5R',
+    questionId: 'Semua roll fabric tertutup plastik',
+    questionEn: '(All fabric rolls are covered)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-8',
+    code: '8',
+    title: 'Kebersihan Debu, Sarang Laba-laba & Kotoran',
+    icon: Sparkles,
+    category: '5R',
+    questionId: 'Seluruh area bersih dari sarang laba-laba, debu dan kotoran',
+    questionEn: '(The entire area is clean from cobwebs, dust and dirt.)',
+    defaultPriority: 'Low',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-9',
+    code: '9',
+    title: 'Jalur Evakuasi Bebas Rintangan (Clear Path)',
+    icon: DoorOpen,
+    category: 'Safety Stop 6',
+    questionId: 'Seluruh jalur evakuasi clear tidak terhalang material, palet, troli, box atau karton',
+    questionEn: '(All evacuation routes are clear and not obstructed by materials, pallets, trolley, box or carton)',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-10',
+    code: '10',
+    title: 'Work Instruction (WI) untuk Semua Proses',
+    icon: FileText,
+    category: '5R',
+    questionId: 'Ada WI (Work Instruction) untuk semua proses kerja (penempatan tersentral/ atau per area). Terlihat jelas dan mudah dimengerti',
+    questionEn: '(There are WI (Work Instruction) for all work processes (placed centralized / per area). Looks clear and easy to understand)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-11',
+    code: '11',
+    title: 'Record Proses Relax & Tidak Menumpuk Kain',
+    icon: ClipboardCheck,
+    category: 'Quality',
+    questionId: 'Semua proses relax memiliki record yang jelas dan kain tidak ditumpuk setelah proses relax',
+    questionEn: '(All relax processes have clear records and fabrics are not stacked after the relax process)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-12',
+    code: '12',
+    title: 'Kondisi Palet, Rak & Trolley Bebas Snagging',
+    icon: CheckCircle2,
+    category: '5R',
+    questionId: 'Semua palet, rak, dan trolley dalam kondisi baik, tidak terkelupas sehingga tidak berpotensi snagging',
+    questionEn: '(All pallets, racks and trolleys are in good condition, not peeled so there is no risk of snagging)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  }
+];
+
+// 13 Point Checksheet Framework 6S Khusus Area Cutting (Sort, Set in order, Shine, Standardize, Sustain)
+export const CUTTING_6S_CHECKPOINTS: CheckpointItem[] = [
+  // --- SORT ---
+  {
+    id: 'cut-6s-1',
+    code: '1',
+    pillar: 'Sort',
+    title: 'Identifikasi & Isolasi Mesin Tidak Berfungsi',
+    icon: Wrench,
+    category: '5R',
+    questionId: 'Jika terdapat mesin yang tidak berfungsi diidentifikasi dan diisolasi.',
+    questionEn: '(If there are malfunctioning machines are identified and isolated.)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'cut-6s-2',
+    code: '2',
+    pillar: 'Sort',
+    title: 'Identifikasi Area QC, Numbering dan Bundling',
+    icon: CheckCircle2,
+    category: '5R',
+    questionId: 'Area QC,numbering dan bundling teridentifikasi dengan jelas',
+    questionEn: '(QC, numbering and bundling areas are clearly identified)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'cut-6s-3',
+    code: '3',
+    pillar: 'Sort',
+    title: 'Pengikatan Aman Gunting / Cekris / Alat ke Mesin',
+    icon: Scissors,
+    category: '5R',
+    questionId: 'Semua gunting / cekris / alat diikat dengan aman ke mesin untuk menghindari kehilangan atau kontaminasi garmen',
+    questionEn: '(All scissors / snips / tools are tied securely to machine to avoid loss or garment contamination)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+
+  // --- SET IN ORDER ---
+  {
+    id: 'cut-6s-4',
+    code: '4',
+    pillar: 'Set in order',
+    title: 'Kerapian Kepala Kain & Pola dalam Lemari Penyimpanan',
+    icon: Package,
+    category: '5R',
+    questionId: 'Kepala kain,pola tertata rapi didalam lemari / tempat penyimpanan, dilengkapi dengan identitas',
+    questionEn: '(Roll ends are store well organized with clear identity)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'cut-6s-5',
+    code: '5',
+    pillar: 'Set in order',
+    title: 'Peralatan Logam di Toolbox / Shadows Box & Logbook',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Peralatan bantu kerja berbahan metal di letakkan pada toolbox/ shadows box, terkunci, list alat sesuai, dokumentasi log book jelas.',
+    questionEn: '(Metal work tools are placed in the toolbox/shadows box, locked, tool list is appropriate, log book documentation is clear)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'cut-6s-6',
+    code: '6',
+    pillar: 'Set in order',
+    title: 'Penempatan Alat Kerja, Botol Minum & Alat Kebersihan',
+    icon: Coffee,
+    category: '5R',
+    questionId: 'Semua peralatan kerja (penjepit kain, alat numbering), botol minum dan alat kebersihan diletakkan pada tempat yang disediakan setelah digunakan',
+    questionEn: '(All work equipment (fabric clamps, numbering tools), drinking bottles and housekeepping tools are placed in the space provided for them after use)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- SHINE ---
+  {
+    id: 'cut-6s-7',
+    code: '7',
+    pillar: 'Shine',
+    title: 'Penyimpanan Hasil Potongan (Panel) Bebas Kontak Lantai',
+    icon: Shirt,
+    category: '5R',
+    questionId: 'Hasil potongan (panel) di dalam polybag tidak diletakkan langsung bersentuhan dengan lantai',
+    questionEn: '(Panels are stored inside polybag and is not directly touching the floor)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'cut-6s-8',
+    code: '8',
+    pillar: 'Shine',
+    title: 'Kebersihan Seluruh Area dari Debu, Kotoran & Sarang Laba-laba',
+    icon: Sparkles,
+    category: '5R',
+    questionId: 'Seluruh area bersih dari sarang laba-laba, debu dan kotoran',
+    questionEn: '(The entire area is clean from cobwebs, dust and dirt.)',
+    defaultPriority: 'Low',
+    suggestedFinding: ''
+  },
+  {
+    id: 'cut-6s-9',
+    code: '9',
+    pillar: 'Shine',
+    title: 'Jalur Evakuasi Bebas Rintangan (Clear Path)',
+    icon: DoorOpen,
+    category: 'Safety Stop 6',
+    questionId: 'Seluruh jalur evakuasi clear tidak terhalang material, palet, troli, box atau karton',
+    questionEn: '(All evacuation routes are clear and not obstructed by materials, pallets, trolley, box or carton)',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+
+  // --- STANDARDIZE ---
+  {
+    id: 'cut-6s-10',
+    code: '10',
+    pillar: 'Standardize',
+    title: 'Work Instruction (WI) untuk Semua Proses Kerja',
+    icon: FileText,
+    category: '5R',
+    questionId: 'Ada WI (Work Instruction) untuk semua proses kerja (penempatan tersentral/ atau per area). Terlihat jelas dan mudah dimengerti',
+    questionEn: '(There are WI (Work Instruction) for all work processes (placed centralized / per area). Looks clear and easy to understand)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'cut-6s-11',
+    code: '11',
+    pillar: 'Standardize',
+    title: 'Ketersediaan Sampel, Colour Continuity Card & Approval Side',
+    icon: ClipboardCheck,
+    category: 'Quality',
+    questionId: 'Sampel, colour continuity card dan approval side tersedia dan terupdate sesuai dengan jalannya produksi',
+    questionEn: '(Samples, color continuity cards and approval sides are available and updated according to the production process)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- SUSTAIN ---
+  {
+    id: 'cut-6s-12',
+    code: '12',
+    pillar: 'Sustain',
+    title: 'Kondisi Marker, Troli & Box Kain Bebas Snagging',
+    icon: Layers,
+    category: '5R',
+    questionId: 'Kondisi penyimpanan marker, troli kain, dan box penyimpanan kain yang sudah terpotong tidak ada kerusakan yang berpotensi snagging',
+    questionEn: '(Pattern storage, fabric trolley, and fabric box for aftercut cloth does not have any damage which may cause snagging)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'cut-6s-13',
+    code: '13',
+    pillar: 'Sustain',
+    title: 'Kondisi Baik Sarung Tangan Besi (Chainmail Gloves)',
+    icon: ShieldCheck,
+    category: 'Safety Stop 6',
+    questionId: 'Sarung tangan besi yang digunakan dalam kondisi yang baik',
+    questionEn: '(Chainmail gloves are in a good condition)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  }
+];
+
+// 11 Point Checksheet Framework 6S Khusus Area Distribusi - PPA Auto & Manual (Sort, Set in order, Shine, Standardize, Sustain)
+export const DISTRIBUSI_PPA_6S_CHECKPOINTS: CheckpointItem[] = [
+  // --- SORT ---
+  {
+    id: 'ppa-6s-1',
+    code: '1',
+    pillar: 'Sort',
+    title: 'Pemisahan Area OK dan Reject Tervisualisasi Jelas',
+    icon: CheckCircle2,
+    category: '5R',
+    questionId: 'Area jelas tervisualisasi untuk OK dan Reject terpisah',
+    questionEn: '(Clearly visualized areas for OK and Reject are separated)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ppa-6s-2',
+    code: '2',
+    pillar: 'Sort',
+    title: '1 Operator Sewing 1 Gunting Beridentitas & Terikat di Mesin',
+    icon: Scissors,
+    category: '5R',
+    questionId: 'Setiap operator sewing hanya memiliki satu gunting, memiliki identitas dan terikat di mesin.',
+    questionEn: '(Every operator have only 1 scissor, have an identity on scissor and tied on machine)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ppa-6s-3',
+    code: '3',
+    pillar: 'Sort',
+    title: 'Bebas Cekris / Gunting di Area QC EndLine PPA',
+    icon: ShieldAlert,
+    category: '5R',
+    questionId: 'Tidak ditemukan cekris/ gunting di area QC EndLine PPA',
+    questionEn: '(No scissors were found in QC EndLine PPA area)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+
+  // --- SET IN ORDER ---
+  {
+    id: 'ppa-6s-4',
+    code: '4',
+    pillar: 'Set in order',
+    title: 'Peralatan Metal Line PPA dalam Tool Box & Sesuai Daftar',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Line PPA memiliki peralatan metal yang tersimpan didalam tool box, isi dan aktual tool digunakan sesuai dengan daftar.',
+    questionEn: '(The PPA line has metal tools stored in the tool box, the contents and actual tools used are in accordance with the list.)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ppa-6s-5',
+    code: '5',
+    pillar: 'Set in order',
+    title: 'Penempatan Alat Kerja, Botol Minum & Alat Kebersihan',
+    icon: Coffee,
+    category: '5R',
+    questionId: 'Semua peralatan bantu kerja, botol minum dan alat kebersihan diletakkan pada tempat yang disediakan setelah digunakan',
+    questionEn: '(All working tools , drinking bottles and housekeeping tools are placed in the space provided after use)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- SHINE ---
+  {
+    id: 'ppa-6s-6',
+    code: '6',
+    pillar: 'Shine',
+    title: 'Kebersihan Seluruh Area dari Sarang Laba-laba, Debu & Kotoran',
+    icon: Sparkles,
+    category: '5R',
+    questionId: 'Seluruh area bersih dari sarang laba-laba, debu dan kotoran',
+    questionEn: '(The entire area is clean from cobwebs, dust and dirt.)',
+    defaultPriority: 'Low',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ppa-6s-7',
+    code: '7',
+    pillar: 'Shine',
+    title: 'Jalur Evakuasi Bebas Hambatan (Clear Path)',
+    icon: DoorOpen,
+    category: 'Safety Stop 6',
+    questionId: 'Seluruh jalur evakuasi clear tidak terhalang material, palet, troli, box atau karton',
+    questionEn: '(All evacuation routes are clear and not obstructed by materials, pallets, trolley, box or carton)',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ppa-6s-8',
+    code: '8',
+    pillar: 'Shine',
+    title: 'Kebersihan & Identitas Mesin Jahit Prepare CO',
+    icon: Shirt,
+    category: '5R',
+    questionId: 'Semua mesin jahit untuk prepare CO bersih dan terdapat identitas',
+    questionEn: '(Unused sewing machines (preparing CO) are controlled well covered and there is identity on the machine)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- STANDARDIZE ---
+  {
+    id: 'ppa-6s-9',
+    code: '9',
+    pillar: 'Standardize',
+    title: 'Ketersediaan Sample Sesuai Produk di Setiap Line PPA',
+    icon: ClipboardCheck,
+    category: 'Quality',
+    questionId: 'Terdapat sample pada masing-masing Line PPA yang sesuai dengan produk yang sedang diproduksi',
+    questionEn: '(There is samples in each Line PPA according to the product being produced)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ppa-6s-10',
+    code: '10',
+    pillar: 'Standardize',
+    title: 'Work Instruction (WI) untuk Semua Proses Kerja PPA',
+    icon: FileText,
+    category: '5R',
+    questionId: 'Ada WI (Work Instruction) untuk semua proses kerja (penempatan tersentral/ atau per area). Terlihat jelas dan mudah dimengerti',
+    questionEn: '(There are WI (Work Instruction) for all work processes (placed centralized / per area). Looks clear and easy to understand)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- SUSTAIN ---
+  {
+    id: 'ppa-6s-11',
+    code: '11',
+    pillar: 'Sustain',
+    title: 'Perawatan Meja & Peralatan Kerja Tanpa Kerusakan',
+    icon: CheckCircle2,
+    category: '5R',
+    questionId: 'Apakah seluruh meja / peralatan terawat dan tidak ditemukan kerusakan?',
+    questionEn: '(Are all table/equipment maintained and are there no damages found?)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  }
+];
+
+// 8 Point Checksheet Framework 6S Khusus Area Distribusi - Supermarket Komponen (Sort, Set in order, Shine, Standardize, Sustain)
+export const DISTRIBUSI_SUPERMARKET_6S_CHECKPOINTS: CheckpointItem[] = [
+  // --- SORT ---
+  {
+    id: 'spm-6s-1',
+    code: '1',
+    pillar: 'Sort',
+    title: 'Visualisasi Alokasi Line & Status Set/Unset',
+    icon: CheckCircle2,
+    category: '5R',
+    questionId: 'Visualisasi yang Jelas untuk status alokasi line, set / unset tidak tercampur',
+    questionEn: '(Clear Visualization for Production line allocation status and not mixed set / unset)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'spm-6s-2',
+    code: '2',
+    pillar: 'Sort',
+    title: 'Cekris / Gunting Bundle di Area Spesifik & Terikat',
+    icon: Scissors,
+    category: '5R',
+    questionId: 'Cekris/gunting untuk pengaturan bundle di area supermarket harus berada di daerah yang spesifik dan dalam kondisi terikat',
+    questionEn: '(Cutting tools for bundling purposes is placed in specific area and are tied)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+
+  // --- SET IN ORDER ---
+  {
+    id: 'spm-6s-3',
+    code: '3',
+    pillar: 'Set in order',
+    title: 'Penempatan Alat Kerja, Botol Minum & Alat Kebersihan',
+    icon: Coffee,
+    category: '5R',
+    questionId: 'Semua peralatan bantu, botol minum dan alat kebersihan diletakkan pada tempat yang disediakan setelah digunakan',
+    questionEn: '(All working tools, drinking bottles and housekeeping tools are placed in the space provided after use)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- SHINE ---
+  {
+    id: 'spm-6s-4',
+    code: '4',
+    pillar: 'Shine',
+    title: 'Kebersihan Seluruh Area dari Sarang Laba-laba, Debu & Kotoran',
+    icon: Sparkles,
+    category: '5R',
+    questionId: 'Seluruh area bersih dari sarang laba-laba, debu dan kotoran',
+    questionEn: '(The entire area is clean from cobwebs, dust and dirt.)',
+    defaultPriority: 'Low',
+    suggestedFinding: ''
+  },
+  {
+    id: 'spm-6s-5',
+    code: '5',
+    pillar: 'Shine',
+    title: 'Penutupan Box Panel Warna Putih / Terang',
+    icon: Package,
+    category: '5R',
+    questionId: 'Box tertutup dengan baik untuk panel berwarna putih atau terang (tidak berpotesi kotor)',
+    questionEn: '(Box is well closed for white or light colored panels (no potential for dirt))',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'spm-6s-6',
+    code: '6',
+    pillar: 'Shine',
+    title: 'Jalur Evakuasi Bebas Rintangan (Clear Path)',
+    icon: DoorOpen,
+    category: 'Safety Stop 6',
+    questionId: 'Seluruh jalur evakuasi clear tidak terhalang material, palet, troli, box atau karton',
+    questionEn: '(All evacuation routes are clear and not obstructed by materials, pallets, trolley, box or carton)',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+
+  // --- STANDARDIZE ---
+  {
+    id: 'spm-6s-7',
+    code: '7',
+    pillar: 'Standardize',
+    title: 'Work Instruction (WI) untuk Semua Proses Kerja Supermarket',
+    icon: FileText,
+    category: '5R',
+    questionId: 'Ada WI (Work Instruction) untuk semua proses kerja (penempatan tersentral/ atau per area). Terlihat jelas dan mudah dimengerti',
+    questionEn: '(There are WI (Work Instruction) for all work processes (placed centralized / per area). Looks clear and easy to understand)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- SUSTAIN ---
+  {
+    id: 'spm-6s-8',
+    code: '8',
+    pillar: 'Sustain',
+    title: 'Kondisi Rak, Box & Trolley Bebas Snagging',
+    icon: Layers,
+    category: '5R',
+    questionId: 'Semua rak, box dan trolley dalam kondisi baik, tidak terkelupas sehingga tidak berpotensi snagging',
+    questionEn: '(All racks, box and trolleys are in good condition, not peeled so there is no risk of snagging)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  }
+];
+
+// 10 Point Checksheet Framework 6S Khusus Area Distribusi - Heat Transfer (Sort, Set in order, Shine, Standardize, Sustain)
+export const DISTRIBUSI_HEAT_TRANSFER_6S_CHECKPOINTS: CheckpointItem[] = [
+  // --- SORT ---
+  {
+    id: 'ht-6s-1',
+    code: '1',
+    pillar: 'Sort',
+    title: 'Pemisahan Area Material In & Out dengan Tanda Jelas',
+    icon: ArrowRight,
+    category: '5R',
+    questionId: 'Area in penerimaan (sebelum proses) dan out (setelah proses) material terpisah dengan tanda area yang jelas',
+    questionEn: '(Separate material receiving in and out areas are available with clearly marked areas)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ht-6s-2',
+    code: '2',
+    pillar: 'Sort',
+    title: 'Pemisahan & Dokumentasi Reject Material',
+    icon: AlertTriangle,
+    category: '5R',
+    questionId: 'Reject material diletakkan terpisah, dan terdokumentasi',
+    questionEn: '(Reject material is placed separately, and well doccumented)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+
+  // --- SET IN ORDER ---
+  {
+    id: 'ht-6s-3',
+    code: '3',
+    pillar: 'Set in order',
+    title: 'Penyimpanan Peralatan Metal di Toolbox/Shadows Box Terkunci & Log Book',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Peralatan bantu kerja berbahan metal di letakkan pada toolbox/ shadows box, terkunci, list alat sesuai, dokumentasi log book jelas.',
+    questionEn: '(Metal work tools are placed in the toolbox/shadows box, locked, tool list is appropriate, log book documentation is clear)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ht-6s-4',
+    code: '4',
+    pillar: 'Set in order',
+    title: 'Penempatan Alat Kerja, Botol Minum & Alat Kebersihan',
+    icon: Coffee,
+    category: '5R',
+    questionId: 'Semua peralatan kerja, botol minum dan alat kebersihan diletakkan pada tempat yang disediakan setelah digunakan',
+    questionEn: '(All work equipment, drinking bottles and housekeepping tools are placed in the space provided for them after use)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- SHINE ---
+  {
+    id: 'ht-6s-5',
+    code: '5',
+    pillar: 'Shine',
+    title: 'Kebersihan Seluruh Area dari Sarang Laba-laba, Debu & Kotoran',
+    icon: Sparkles,
+    category: '5R',
+    questionId: 'Seluruh area bersih dari sarang laba-laba, debu dan kotoran',
+    questionEn: '(The entire area is clean from cobwebs, dust and dirt.)',
+    defaultPriority: 'Low',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ht-6s-6',
+    code: '6',
+    pillar: 'Shine',
+    title: 'Jalur Evakuasi Bebas Hambatan (Clear Path)',
+    icon: DoorOpen,
+    category: 'Safety Stop 6',
+    questionId: 'Seluruh jalur evakuasi clear tidak terhalang material, palet, troli, box atau karton',
+    questionEn: '(All evacuation routes are clear and not obstructed by materials, pallets, trolley, box or carton)',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+
+  // --- STANDARDIZE ---
+  {
+    id: 'ht-6s-7',
+    code: '7',
+    pillar: 'Standardize',
+    title: 'Work Instruction (WI) untuk Semua Proses Kerja Heat Transfer',
+    icon: FileText,
+    category: '5R',
+    questionId: 'Ada WI (Work Instruction) untuk semua proses kerja (penempatan tersentral/ atau per area). Terlihat jelas dan mudah dimengerti',
+    questionEn: '(There are WI (Work Instruction) for all work processes (placed centralized / per area). Looks clear and easy to understand)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ht-6s-8',
+    code: '8',
+    pillar: 'Standardize',
+    title: 'Sample Approval Produksi & Parameter Pengaturan (Suhu, Tekanan, Waktu)',
+    icon: Flame,
+    category: '5R',
+    questionId: 'Terdapat sample approval produksi dan parameter pengaturan (suhu, tekanan, waktu) untuk style yang sedang berjalan',
+    questionEn: 'There are production approval samples and setting parameters (temperature, pressure, time) for the running style.',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+
+  // --- SUSTAIN ---
+  {
+    id: 'ht-6s-9',
+    code: '9',
+    pillar: 'Sustain',
+    title: 'Kalibrasi Rutin Mesin Heat Transfer / Fuse / Bonding Terupdate',
+    icon: Wrench,
+    category: '5R',
+    questionId: 'Mesin heat transfer/ fuse/ bonding dikalibrasi secara rutin sebelum produksi dengan mengikuti standard verifikasi yang telah ditentukan, dicatat dengan baik dan terupdate',
+    questionEn: '(Heat transfer / fuse/ bonding machine is calibrated regularly before bulk production following the standard and well documented)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ht-6s-10',
+    code: '10',
+    pillar: 'Sustain',
+    title: 'Perawatan Meja & Peralatan Kerja Heat Transfer',
+    icon: CheckCircle2,
+    category: '5R',
+    questionId: 'Meja serta peralatan kerja heat transfer dijaga dan dirawat dengan baik',
+    questionEn: '(Tables and heat transfer working equipments are well kept and maintained)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  }
+];
+
+// 12 Point Checksheet Framework 6S Khusus Area Sewing (Sort, Set in order, Shine, Standardize, Sustain)
+export const SEWING_6S_CHECKPOINTS: CheckpointItem[] = [
+  // --- SORT ---
+  {
+    id: 'sew-6s-1',
+    code: '1',
+    pillar: 'Sort',
+    title: 'Visualisasi Pemisahan Area OK & Reject (Regular & Hangerline)',
+    icon: CheckCircle2,
+    category: '5R',
+    questionId: 'Area jelas tervisualisasi untuk OK dan Reject terpisah (Regular line, Hangerline : tidak ada garment reject yang kembali ke station tanpa menggunakan hanger).',
+    questionEn: '(Clearly visualized areas for OK and Reject are separated (Regular line , Hangerline : return to station))',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sew-6s-2',
+    code: '2',
+    pillar: 'Sort',
+    title: 'Satu Gunting / Cekris per Operator Sewing Terikat di Mesin',
+    icon: Scissors,
+    category: '5R',
+    questionId: 'Setiap operator sewing hanya memiliki satu gunting/ cekris, dan terikat di mesin.',
+    questionEn: '(Every operator have only 1 scissor, and tied on machine)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sew-6s-3',
+    code: '3',
+    pillar: 'Sort',
+    title: 'Tidak Ditemukan Cekris / Gunting di Area QC EndLine',
+    icon: Scissors,
+    category: '5R',
+    questionId: 'Tidak ditemukan cekris/ gunting di area QC EndLine PPA',
+    questionEn: '(No scissors were found in QC EndLine PPA area)',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+
+  // --- SET IN ORDER ---
+  {
+    id: 'sew-6s-4',
+    code: '4',
+    pillar: 'Set in order',
+    title: 'Peralatan Tool Box Line Sesuai Daftar Aktual',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Line memiliki peralatan tool box, isi dan aktual tool digunakan sesuai dengan daftar.',
+    questionEn: 'Line have toolbox equipment, contents and actual tools used according to the list',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sew-6s-5',
+    code: '5',
+    pillar: 'Set in order',
+    title: 'Penyimpanan Mesin Jahit Non-Aktif (Kertas, Lepas Jarum & Area Sesuai)',
+    icon: Cpu,
+    category: '5R',
+    questionId: 'Mesin jahit yang tidak digunakan dilengkapi dengan kertas dibawah sepatu, jarum terlepas dan mesin jahit diletakkan pada area yang sesuai',
+    questionEn: '(Sewing machines that are not in use is equipped with paper below presser foot, the needle is removed and sewing machines are placed in the appropriate area)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- SHINE ---
+  {
+    id: 'sew-6s-6',
+    code: '6',
+    pillar: 'Shine',
+    title: 'Kebersihan & Kerapian Seluruh Area Line Sewing',
+    icon: Sparkles,
+    category: '5R',
+    questionId: 'Seluruh area line bersih, terawat, teratur dan semua barang diletakkan pada tempatnya',
+    questionEn: '(All of line area are clean, well-maintained and all equipment / tools organized on the right place)',
+    defaultPriority: 'Low',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sew-6s-7',
+    code: '7',
+    pillar: 'Shine',
+    title: 'Mesin Jahit Prepare CO Bersih & Beridentitas Jelas',
+    icon: Shirt,
+    category: '5R',
+    questionId: 'Semua mesin jahit untuk prepare CO bersih dan memiliki identitas',
+    questionEn: '(Unused sewing machines (preparing CO) are controlled well covered and there is identity on machine)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sew-6s-8',
+    code: '8',
+    pillar: 'Shine',
+    title: 'Jalur Evakuasi Bebas Rintangan (Clear Path)',
+    icon: DoorOpen,
+    category: 'Safety Stop 6',
+    questionId: 'Seluruh jalur evakuasi clear tidak terhalang material, palet, troli, box atau karton',
+    questionEn: '(All evacuation routes are clear and not obstructed by materials, pallets, trolley, box or carton)',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+
+  // --- STANDARDIZE ---
+  {
+    id: 'sew-6s-9',
+    code: '9',
+    pillar: 'Standardize',
+    title: '3 Jenis Sample (QC Standard, Ironing, Folding) & Approved Production Sample',
+    icon: ClipboardCheck,
+    category: '5R',
+    questionId: 'Terdapat 3 jenis sample pada masing-masing line yang sesuai dengan produk yang sedang diproduksi , yaitu sample QC standard, sample Ironing, dan sample folding (Spesifikasi L&P tersedia berdasarkan produk yang sedang berjalan). Approved Production Sample is available in each production line, with correct and valid information.',
+    questionEn: '(There are 3 types of samples in each line according to the product being produced, namely standard QC samples, ironing samples, and folding samples (L&P specifications are available based on the product in progress))',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sew-6s-10',
+    code: '10',
+    pillar: 'Standardize',
+    title: 'Work Instruction (WI) untuk Semua Proses Kerja Sewing',
+    icon: FileText,
+    category: '5R',
+    questionId: 'Ada WI (Work Instruction) untuk semua proses kerja (penempatan tersentral/ atau per area). Terlihat jelas dan mudah dimengerti',
+    questionEn: '(There are WI (Work Instruction) for all work processes (placed centralized / per area). Looks clear and easy to understand',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- SUSTAIN ---
+  {
+    id: 'sew-6s-11',
+    code: '11',
+    pillar: 'Sustain',
+    title: 'Perawatan Meja & Peralatan Line Sewing Bebas Kerusakan',
+    icon: CheckCircle2,
+    category: '5R',
+    questionId: 'Apakah seluruh meja / peralatan terawat dan tidak ditemukan kerusakan?',
+    questionEn: '(Are all table/equipment maintained and are there no damages found?)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sew-6s-12',
+    code: '12',
+    pillar: 'Sustain',
+    title: 'Kondisi Meja Ironing (Gosok), Vakum & Penggantian Alas Rutin',
+    icon: Flame,
+    category: '5R',
+    questionId: 'Meja ironing (gosok) dalam keadaan baik, rata, dilengkapi dengan vakum dan alas gosok rutin diganti (checklist terupdate)',
+    questionEn: '(Ironing table in good condition, flat, equipped with a vacuum and routinely replaced ironing table cloth (updated checklist))',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  }
+];
+
+// 10 Point Checksheet Framework 6S Khusus Area Finish Good (Sort, Set in order, Shine, Standardize, Sustain)
+export const FINISH_GOOD_6S_CHECKPOINTS: CheckpointItem[] = [
+  // --- SORT ---
+  {
+    id: 'fg-6s-1',
+    code: '1',
+    pillar: 'Sort',
+    title: 'Visualisasi Jelas Area Stuffing & Tidak Tercampur',
+    icon: Eye,
+    category: '5R',
+    questionId: 'Visualisasi yang Jelas untuk area stuffing dan tidak tercampur',
+    questionEn: '(Clear Visualization for stuffing area and not mixed)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'fg-6s-2',
+    code: '2',
+    pillar: 'Sort',
+    title: 'Cekris / Gunting Area Packing di Area Spesifik & Terikat',
+    icon: Scissors,
+    category: '5R',
+    questionId: 'Cekris/gunting di area packing harus berada di daerah yang spesifik dan dalam kondisi terikat',
+    questionEn: 'Cutting tools purposes in packing area is placed in specific area and are tied',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+
+  // --- SET IN ORDER ---
+  {
+    id: 'fg-6s-3',
+    code: '3',
+    pillar: 'Set in order',
+    title: 'Penempatan Karton di Palet & Jarak 0,5m dari Dinding',
+    icon: Package,
+    category: '5R',
+    questionId: 'Seluruh karton diletakkan pada palet dan 0,5m tidak langsung menempel dinding',
+    questionEn: 'All carton placed on pallete and 0,5m from wall',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'fg-6s-4',
+    code: '4',
+    pillar: 'Set in order',
+    title: 'Penempatan Peralatan Bantu, Botol Minum & Alat Kebersihan',
+    icon: Coffee,
+    category: '5R',
+    questionId: 'Semua peralatan bantu , botol minum dan alat kebersihan diletakkan pada tempat yang disediakan setelah digunakan',
+    questionEn: '(All working tools, drinking bottles and housekeeping tools are placed in the space provided after use)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'fg-6s-5',
+    code: '5',
+    pillar: 'Set in order',
+    title: 'Peralatan Tool Box Packing Sesuai Daftar Aktual',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Packing memiliki peralatan tool box, isi dan aktual tool digunakan sesuai dengan daftar.',
+    questionEn: 'Packing have toolbox equipment, contents and actual tools used according to the list',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+
+  // --- SHINE ---
+  {
+    id: 'fg-6s-6',
+    code: '6',
+    pillar: 'Shine',
+    title: 'Kebersihan Seluruh Area dari Sarang Laba-laba, Debu & Kotoran',
+    icon: Sparkles,
+    category: '5R',
+    questionId: 'Seluruh area bersih dari sarang laba-laba, debu dan kotoran',
+    questionEn: '(The entire area is clean from cobwebs, dust and dirt.)',
+    defaultPriority: 'Low',
+    suggestedFinding: ''
+  },
+  {
+    id: 'fg-6s-7',
+    code: '7',
+    pillar: 'Shine',
+    title: 'Jalur Evakuasi Bebas Rintangan (Clear Path)',
+    icon: DoorOpen,
+    category: 'Safety Stop 6',
+    questionId: 'Seluruh jalur evakuasi clear tidak terhalang material, palet, troli, box atau karton',
+    questionEn: '(All evacuation routes are clear and not obstructed by materials, pallets, trolley, box or carton)',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+
+  // --- STANDARDIZE ---
+  {
+    id: 'fg-6s-8',
+    code: '8',
+    pillar: 'Standardize',
+    title: 'Work Instruction (WI) untuk Semua Proses Kerja Finish Good',
+    icon: FileText,
+    category: '5R',
+    questionId: 'Ada WI (Work Instruction) untuk semua proses kerja (penempatan tersentral/ atau per area). Terlihat jelas dan mudah dimengerti',
+    questionEn: '(There are WI (Work Instruction) for all work processes (placed centralized / per area). Looks clear and easy to understand',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+  {
+    id: 'fg-6s-9',
+    code: '9',
+    pillar: 'Standardize',
+    title: 'Penggunaan & Pembaruan Log Book Visitor',
+    icon: ClipboardCheck,
+    category: '5R',
+    questionId: 'Log book visitor digunakan dan update',
+    questionEn: 'The visitor log book is used and updated',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  },
+
+  // --- SUSTAIN ---
+  {
+    id: 'fg-6s-10',
+    code: '10',
+    pillar: 'Sustain',
+    title: 'Perawatan Palet, Trolley & Peralatan Bebas Kerusakan',
+    icon: Truck,
+    category: '5R',
+    questionId: 'Apakah seluruh palet dan trolley / peralatan terawat dan tidak ditemukan kerusakan?',
+    questionEn: '(Are all pallete and trolley/equipment maintained and are there no damages found?)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  }
+];
+
+export type ChecksheetCategoryTab = 'stop6' | '6s' | 'security-brand';
+
+// Poin Checksheet Securit Brand Aspect (Security & Brand Protection) untuk Seluruh Area
+export const SECURITY_BRAND_CHECKPOINTS: CheckpointItem[] = [
+  {
+    id: 'sec-brand-1',
+    code: '1',
+    title: 'Akses Area Terbatas & Kontrol Masuk/Keluar',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Apakah akses area {area} terbatas untuk personil yang berwenang dan pintu darurat/akses masuk terkontrol?',
+    questionEn: '(Is access to the {area} restricted to authorized personnel and emergency exits/entrances properly controlled?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sec-brand-2',
+    code: '2',
+    title: 'Penyimpanan & Pengendalian Trims / Label Brand',
+    icon: ShieldCheck,
+    category: 'Quality',
+    questionId: 'Apakah label, barcode, hangtag, dan trims berlogo brand disimpan di lemari/ruangan terkunci dengan logbook mutasi?',
+    questionEn: '(Are brand labels, barcodes, hangtags, and branded trims stored in locked storage with strict transaction logbook in the {area}?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sec-brand-3',
+    code: '3',
+    title: 'Pemusnahan & Mutilasi Limbah Berlogo Brand',
+    icon: ShieldAlert,
+    category: 'Waste & Elimination',
+    questionId: 'Apakah limbah perca, cacat cetak heat-transfer, dan reject produk berlogo brand dimutilasi/dipotong sebelum dibuang?',
+    questionEn: '(Are textile scraps, defective heat-transfers, and rejected brand items mutilated/cut before disposal in the {area}?)',
+    defaultPriority: 'Critical',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sec-brand-4',
+    code: '4',
+    title: 'Pencegahan Penyelundupan & Integritas Produk',
+    icon: Search,
+    category: '5R',
+    questionId: 'Apakah ada pengawasan terhadap potensi barang keluar tanpa izin (anti-pilferage) dan verifikasi identitas PO garmen?',
+    questionEn: '(Is there strict anti-pilferage surveillance and garment PO identity verification maintained in the {area}?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sec-brand-5',
+    code: '5',
+    title: 'CCTV & Pemantauan Keamanan Area Kritis',
+    icon: Eye,
+    category: 'Safety Stop 6',
+    questionId: 'Apakah kamera pengawas CCTV di area {area} aktif, jangkauan visual jelas tanpa terhalang benda atau material?',
+    questionEn: '(Are CCTV surveillance cameras in the {area} operational with clear line-of-sight unobstructed by materials?)',
+    defaultPriority: 'Medium',
+    suggestedFinding: ''
+  }
+];
+
+// Poin Checksheet Security Brand Aspect khusus Area Warehouse Fabric (5 Point Pengecekan)
+export const WAREHOUSE_FABRIC_SECURITY_BRAND_CHECKPOINTS: CheckpointItem[] = [
+  {
+    id: 'wh-fab-sec-1',
+    code: '1',
+    title: 'Warning Sign Brand Protection di Pintu Masuk',
+    icon: AlertTriangle,
+    category: '5R',
+    questionId: 'Apakah pintu masuk area warehouse fabric telah dilengkapi dengan Warning Sign Brand Protection?',
+    questionEn: '(Is the entrance door to the fabric warehouse area equipped with a Brand Protection warning sign?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-sec-2',
+    code: '2',
+    title: 'Buku Tamu & Visitor Card di Pintu Masuk',
+    icon: FileText,
+    category: '5R',
+    questionId: 'Apakah di pintu masuk warehouse fabric tersedia buku tamu dan visitor card?',
+    questionEn: '(Are a visitor logbook and visitor cards available at the fabric warehouse entrance?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-sec-3',
+    code: '3',
+    title: 'Alarm di Pintu Masuk Warehouse Fabric',
+    icon: Bell,
+    category: 'Safety Stop 6',
+    questionId: 'Apakah pintu masuk warehouse fabric dilengkapi dengan alarm?',
+    questionEn: '(Is the fabric warehouse entrance door equipped with an alarm?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-sec-4',
+    code: '4',
+    title: 'CCTV dan EAC (Electronic Access Control)',
+    icon: Eye,
+    category: 'Safety Stop 6',
+    questionId: 'Apakah di area warehouse fabric dilengkapi dengan CCTV dan EAC?',
+    questionEn: '(Is the fabric warehouse area equipped with CCTV and EAC (Electronic Access Control)?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'wh-fab-sec-5',
+    code: '5',
+    title: 'Penyimpanan Fabric Dipisahkan Berdasarkan Brand',
+    icon: Layers,
+    category: 'Material Flow',
+    questionId: 'Apakah penyimpanan di area warehouse fabric telah dipisahkan berdasarkan masing-masing brand?',
+    questionEn: '(Is storage in the fabric warehouse area segregated by brand?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  }
+];
+
+// 2 Point Checksheet Security Control Khusus Area Cutting (Paper Pattern Storage)
+export const CUTTING_SECURITY_CONTROL_CHECKPOINTS: CheckpointItem[] = [
+  {
+    id: 'cut-sec-1',
+    code: '1',
+    pillar: 'Security Control',
+    title: 'CCTV Tempat Penyimpanan Paper Pattern',
+    icon: Eye,
+    category: 'Safety Stop 6',
+    questionId: 'Apakah tempat penyimpanan paper pattern di area cutting dilengkapi dengan CCTV?',
+    questionEn: '(Is the paper pattern storage area in the cutting area equipped with CCTV?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'cut-sec-2',
+    code: '2',
+    pillar: 'Security Control',
+    title: 'Kunci Penyimpanan Paper Pattern & Akses PIC',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Apakah kunci penyimpanan paper pattern disimpan dan hanya bisa diakses oleh PIC?',
+    questionEn: '(Is the paper pattern storage key kept securely and accessible only by the PIC?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  }
+];
+
+// 2 Point Checksheet Security Brand Aspect Khusus Area Distribusi - PPA Auto & Manual (Label Ataca Storage)
+export const DISTRIBUSI_PPA_SECURITY_BRAND_CHECKPOINTS: CheckpointItem[] = [
+  {
+    id: 'ppa-sec-1',
+    code: '1',
+    pillar: 'Security Brand Aspect',
+    title: 'CCTV Tempat Penyimpanan Label Ataca PPA',
+    icon: Eye,
+    category: 'Safety Stop 6',
+    questionId: 'Apakah tempat penyimpanan label ataca di area PPA dilengkapi dengan CCTV?',
+    questionEn: '(Is the ataca label storage area in the PPA area equipped with CCTV?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ppa-sec-2',
+    code: '2',
+    pillar: 'Security Brand Aspect',
+    title: 'Kunci Penyimpanan Label Ataca & Akses PIC',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Apakah kunci penyimpanan label ataca disimpan dan hanya bisa diakses oleh PIC?',
+    questionEn: '(Is the ataca label storage key kept securely and accessible only by the PIC?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  }
+];
+
+// 2 Point Checksheet Security Brand Aspect Khusus Area Distribusi - Heat Transfer (Paper Pattern Storage)
+export const DISTRIBUSI_HEAT_TRANSFER_SECURITY_BRAND_CHECKPOINTS: CheckpointItem[] = [
+  {
+    id: 'ht-sec-1',
+    code: '1',
+    pillar: 'Security Brand Aspect',
+    title: 'CCTV Tempat Penyimpanan Paper Pattern Heat Transfer',
+    icon: Eye,
+    category: 'Safety Stop 6',
+    questionId: 'Apakah tempat penyimpanan paper pattern di area heat transfer dilengkapi dengan CCTV?',
+    questionEn: '(Is the paper pattern storage area in the heat transfer area equipped with CCTV?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'ht-sec-2',
+    code: '2',
+    pillar: 'Security Brand Aspect',
+    title: 'Kunci Penyimpanan Paper Pattern & Akses PIC',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Apakah kunci penyimpanan paper pattern disimpan dan hanya bisa diakses oleh PIC?',
+    questionEn: '(Is the paper pattern storage key kept securely and accessible only by the PIC?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  }
+];
+
+// 2 Point Checksheet Security Brand Aspect Khusus Area Sewing (Label Ataca Storage)
+export const SEWING_SECURITY_BRAND_CHECKPOINTS: CheckpointItem[] = [
+  {
+    id: 'sew-sec-1',
+    code: '1',
+    pillar: 'Security Brand Aspect',
+    title: 'CCTV Tempat Penyimpanan Label Ataca Sewing',
+    icon: Eye,
+    category: 'Safety Stop 6',
+    questionId: 'Apakah tempat penyimpanan label ataca di area sewing dilengkapi dengan CCTV?',
+    questionEn: '(Is the ataca label storage area in the sewing area equipped with CCTV?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  },
+  {
+    id: 'sew-sec-2',
+    code: '2',
+    pillar: 'Security Brand Aspect',
+    title: 'Kunci Penyimpanan Label Ataca & Akses PIC',
+    icon: Lock,
+    category: '5R',
+    questionId: 'Apakah kunci penyimpanan label ataca disimpan dan hanya bisa diakses oleh PIC?',
+    questionEn: '(Is the ataca label storage key kept securely and accessible only by the PIC?)',
+    defaultPriority: 'High',
+    suggestedFinding: ''
+  }
+];
+
+// Helper untuk mendapatkan daftar checkpoint sesuai area dan kategori
+export const getCheckpointsForArea = (
+  areaId: ChecksheetAreaId, 
+  cat: ChecksheetCategoryTab,
+  warehouseSubArea?: WarehouseSubAreaId,
+  distribusiSubArea?: DistribusiSubAreaId
+): CheckpointItem[] => {
+  if (cat === 'stop6') {
+    return STOP6_CHECKPOINTS;
+  }
+  if (cat === 'security-brand') {
+    if (areaId === 'distribusi') {
+      if (distribusiSubArea === 'supermarket') {
+        return [];
+      }
+      if (distribusiSubArea === 'ppa') {
+        return DISTRIBUSI_PPA_SECURITY_BRAND_CHECKPOINTS;
+      }
+      if (distribusiSubArea === 'heat-transfer') {
+        return DISTRIBUSI_HEAT_TRANSFER_SECURITY_BRAND_CHECKPOINTS;
+      }
+    }
+    if (areaId === 'cutting') {
+      return CUTTING_SECURITY_CONTROL_CHECKPOINTS;
+    }
+    if (areaId === 'warehouse' && warehouseSubArea === 'warehouse-fabric') {
+      return WAREHOUSE_FABRIC_SECURITY_BRAND_CHECKPOINTS;
+    }
+    if (areaId === 'sewing') {
+      return SEWING_SECURITY_BRAND_CHECKPOINTS;
+    }
+    return SECURITY_BRAND_CHECKPOINTS;
+  }
+  if (areaId === 'cutting') {
+    return CUTTING_6S_CHECKPOINTS;
+  }
+  if (areaId === 'warehouse') {
+    if (warehouseSubArea === 'warehouse-fabric') {
+      return WAREHOUSE_FABRIC_6S_CHECKPOINTS;
+    }
+    return WAREHOUSE_6S_CHECKPOINTS;
+  }
+  if (areaId === 'distribusi') {
+    if (distribusiSubArea === 'ppa') {
+      return DISTRIBUSI_PPA_6S_CHECKPOINTS;
+    }
+    if (distribusiSubArea === 'supermarket') {
+      return DISTRIBUSI_SUPERMARKET_6S_CHECKPOINTS;
+    }
+    if (distribusiSubArea === 'heat-transfer') {
+      return DISTRIBUSI_HEAT_TRANSFER_6S_CHECKPOINTS;
+    }
+  }
+  if (areaId === 'sewing') {
+    return SEWING_6S_CHECKPOINTS;
+  }
+  if (areaId === 'finish-good') {
+    return FINISH_GOOD_6S_CHECKPOINTS;
+  }
+  return SIX_S_CHECKPOINTS;
+};
+
 interface ChecksheetViewProps {
   findings: InspectionFinding[];
   currentUser: UserAccount;
@@ -335,6 +1770,9 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   // 2. Selected Sub-Area when Distribusi is active: 'ppa' | 'supermarket' | 'heat-transfer'
   const [selectedDistribusiSubArea, setSelectedDistribusiSubArea] = useState<DistribusiSubAreaId>('ppa');
   
+  // 2b. Selected Sub-Area when Warehouse is active: 'warehouse-accessories' | 'warehouse-fabric'
+  const [selectedWarehouseSubArea, setSelectedWarehouseSubArea] = useState<WarehouseSubAreaId>('warehouse-accessories');
+
   // 3. Selected Factory Unit (Synchronized with global app factory)
   const [internalFactory, setInternalFactory] = useState<FactoryOption>(controlledFactory || 'AOI 1');
 
@@ -356,8 +1794,15 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   // 3c. PIC Name State - Input teks bebas nama PIC dibawah Assessor (Default kosong)
   const [customPicName, setCustomPicName] = useState<string>('');
 
-  // 4. Category tab: 'stop6' (Safety STOP-6) or '6s' (Framework 6S)
-  const [activeCategory, setActiveCategory] = useState<'stop6' | '6s'>('stop6');
+  // 4. Category tab: 'stop6' (Safety STOP-6) | '6s' (Framework 6S) | 'security-brand' (Securit Brand Aspect)
+  const [activeCategory, setActiveCategory] = useState<ChecksheetCategoryTab>('stop6');
+
+  // Automatically switch away from 'security-brand' if supermarket sub-area is chosen (no security brand checksheet in supermarket)
+  useEffect(() => {
+    if (selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'supermarket' && activeCategory === 'security-brand') {
+      setActiveCategory('6s');
+    }
+  }, [selectedAreaId, selectedDistribusiSubArea, activeCategory]);
 
   // 5. Scoring states: key = `${uniqueAreaKey}-${category}-${checkpointId}`, value = 1 (Aman) | 0 (Bahaya)
   const [scores, setScores] = useState<Record<string, 1 | 0>>({});
@@ -375,19 +1820,41 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   // 8. Photo compression loading indicator
   const [compressingId, setCompressingId] = useState<string | null>(null);
 
+  const isWarehouse = selectedAreaId === 'warehouse';
+  const isDistribusi = selectedAreaId === 'distribusi';
+
   const mainArea = CHECK_AREAS.find(a => a.id === selectedAreaId) || CHECK_AREAS[0];
   const activeSubArea = DISTRIBUSI_SUB_AREAS.find(s => s.id === selectedDistribusiSubArea) || DISTRIBUSI_SUB_AREAS[0];
+  const activeWarehouseSubArea = WAREHOUSE_SUB_AREAS.find(s => s.id === selectedWarehouseSubArea) || WAREHOUSE_SUB_AREAS[0];
 
-  // Resolve current active configuration depending on whether Distribusi is selected
-  const isDistribusi = selectedAreaId === 'distribusi';
-  const currentKeyPrefix = isDistribusi ? `distribusi-${selectedDistribusiSubArea}` : selectedAreaId;
-  const currentAreaDisplayName = isDistribusi ? `Distribusi (${activeSubArea.fullTitle})` : mainArea.name;
-  const currentBoxTitle = isDistribusi ? activeSubArea.boxTitle : mainArea.boxTitle;
+  // Resolve current active configuration depending on whether Warehouse or Distribusi is selected
+  const currentKeyPrefix = isWarehouse
+    ? `warehouse-${selectedWarehouseSubArea}`
+    : isDistribusi
+    ? `distribusi-${selectedDistribusiSubArea}`
+    : selectedAreaId;
+  const currentAreaDisplayName = isWarehouse
+    ? activeWarehouseSubArea.name
+    : isDistribusi
+    ? `Distribusi (${activeSubArea.fullTitle})`
+    : mainArea.name;
+  const currentBoxTitle = isWarehouse
+    ? activeWarehouseSubArea.boxTitle
+    : isDistribusi
+    ? activeSubArea.boxTitle
+    : mainArea.boxTitle;
   const currentDepartment = mainArea.department;
-  const currentDefaultPic = isDistribusi ? activeSubArea.defaultPic : mainArea.defaultPic;
-  const currentDescription = isDistribusi ? activeSubArea.description : mainArea.description;
-
-  const currentCheckpoints = activeCategory === 'stop6' ? STOP6_CHECKPOINTS : SIX_S_CHECKPOINTS;
+  const currentDefaultPic = isWarehouse
+    ? activeWarehouseSubArea.defaultPic
+    : isDistribusi
+    ? activeSubArea.defaultPic
+    : mainArea.defaultPic;
+  const currentCheckpoints = getCheckpointsForArea(
+    selectedAreaId, 
+    activeCategory, 
+    selectedWarehouseSubArea,
+    selectedDistribusiSubArea
+  );
 
   // Format question text with the current area name
   const formatQuestion = (text: string, areaName: string) => {
@@ -408,7 +1875,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
     // If score is 0 (Ada potensi bahaya / Tidak terpenuhi), initialize draft without pre-filling suggestion text
     if (score === 0) {
       const item = currentCheckpoints.find(c => c.id === checkpointId);
-      const isItem5R = activeCategory === '6s' || item?.category === '5R';
+      const isItem5R = activeCategory === '6s' || activeCategory === 'security-brand' || item?.category === '5R';
       setDraftFindings(prev => {
         const existing = prev[key];
         return {
@@ -477,18 +1944,13 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
     }
   };
 
-  // Quick Preset Sample Photo Picker
-  const handlePickPresetPhoto = (checkpointId: string, url: string) => {
-    handleUpdateDraft(checkpointId, 'photoUrl', url);
-  };
-
   // Save Finding directly into Global State
   const handleSaveDraftAsFinding = (checkpoint: CheckpointItem) => {
     const key = getItemKey(checkpoint.id);
     const draft = draftFindings[key];
 
     const description = draft?.description?.trim() || '';
-    const photoUrl = draft?.photoUrl || SAMPLE_PHOTO_PRESETS[0].url; // Fallback to safe preset if no camera taken
+    const photoUrl = draft?.photoUrl || '';
     const pic = draft?.pic?.trim() || customPicName.trim() || currentDefaultPic;
     const priority = draft?.priority || checkpoint.defaultPriority;
     const findingAssessor = draft?.assessor?.trim() || assessorName.trim() || currentUser.name || 'Assessor Genba';
@@ -499,7 +1961,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
       id: newFindingId,
       factory: selectedFactory,
       date: new Date().toISOString().split('T')[0],
-      area: isDistribusi ? `Distribusi - ${activeSubArea.name}` : mainArea.name,
+      area: isWarehouse ? activeWarehouseSubArea.name : isDistribusi ? `Distribusi - ${activeSubArea.name}` : mainArea.name,
       finding: description ? `[Checksheet ${checkpoint.code} - ${checkpoint.title}] ${description}` : `[Checksheet ${checkpoint.code} - ${checkpoint.title}]`,
       category: checkpoint.category,
       pic: pic,
@@ -745,7 +2207,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
             <span className="text-[10px] font-normal text-slate-400 font-mono">(Klik area untuk ganti checksheet)</span>
           </label>
           <span className="text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-            {evaluatedCount}/{totalCheckpointsInArea} Poin Terisi ({safeCount} {activeCategory === '6s' ? 'Terpenuhi' : 'Aman'} &bull; {hazardCount} {activeCategory === '6s' ? 'Tidak Terpenuhi' : 'Bahaya'})
+            {evaluatedCount}/{totalCheckpointsInArea} Poin Terisi ({safeCount} {activeCategory === 'stop6' ? 'Aman' : 'Terpenuhi'} &bull; {hazardCount} {activeCategory === 'stop6' ? 'Bahaya' : 'Tidak Terpenuhi'})
           </span>
         </div>
 
@@ -754,10 +2216,20 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
             const isSelected = area.id === selectedAreaId;
             const AreaIcon = area.icon;
 
+            const areaCheckpoints = getCheckpointsForArea(
+              area.id, 
+              activeCategory, 
+              area.id === 'warehouse' ? selectedWarehouseSubArea : undefined,
+              area.id === 'distribusi' ? selectedDistribusiSubArea : undefined
+            );
+            const areaTotalCount = areaCheckpoints.length;
+
             // count evaluations in this specific area
             let areaEval = 0;
-            currentCheckpoints.forEach(chk => {
-              const chkKey = area.id === 'distribusi'
+            areaCheckpoints.forEach(chk => {
+              const chkKey = area.id === 'warehouse'
+                ? `warehouse-${selectedWarehouseSubArea}-${activeCategory}-${chk.id}`
+                : area.id === 'distribusi'
                 ? `distribusi-${selectedDistribusiSubArea}-${activeCategory}-${chk.id}`
                 : `${area.id}-${activeCategory}-${chk.id}`;
               if (scores[chkKey] !== undefined) {
@@ -799,17 +2271,27 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                 </p>
 
                 {area.hasSubAreas && (
-                  <p className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 mt-1 inline-block">
-                    3 Sub: {activeSubArea.name}
+                  <p className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border mt-1 inline-block ${
+                    area.id === 'warehouse'
+                      ? selectedWarehouseSubArea === 'warehouse-accessories'
+                        ? 'text-blue-800 bg-blue-50 border-blue-200'
+                        : 'text-amber-800 bg-amber-50 border-amber-200'
+                      : selectedDistribusiSubArea === 'ppa'
+                      ? 'text-teal-800 bg-teal-50 border-teal-200'
+                      : selectedDistribusiSubArea === 'supermarket'
+                      ? 'text-purple-800 bg-purple-50 border-purple-200'
+                      : 'text-rose-800 bg-rose-50 border-rose-200'
+                  }`}>
+                    {area.id === 'warehouse' ? `2 Sub: ${activeWarehouseSubArea.name}` : `3 Sub: ${activeSubArea.name}`}
                   </p>
                 )}
 
                 <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
                   <span className="text-slate-500 font-medium">Status Cek:</span>
                   <span className={`font-bold font-mono ${
-                    areaEval === totalCheckpointsInArea ? 'text-emerald-600' : areaEval > 0 ? 'text-amber-600' : 'text-slate-400'
+                    areaEval === areaTotalCount ? 'text-emerald-600' : areaEval > 0 ? 'text-amber-600' : 'text-slate-400'
                   }`}>
-                    {areaEval}/{totalCheckpointsInArea} Poin
+                    {areaEval}/{areaTotalCount} Poin
                   </span>
                 </div>
               </button>
@@ -817,24 +2299,156 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
           })}
         </div>
 
-        {/* 3 Sub-Area Buttons untuk Distribusi: "PPA", "Supermarket", dan "Heat Transfer" */}
-        {isDistribusi && (
-          <div className="p-4 bg-emerald-50/90 rounded-2xl border-2 border-emerald-300 shadow-xs space-y-2 animate-in fade-in slide-in-from-top-1">
+        {/* 2 Sub-Area Buttons untuk Warehouse: "Warehouse Accessories" dan "Warehouse Fabric" */}
+        {isWarehouse && (
+          <div className={`p-4 rounded-2xl border-2 shadow-xs space-y-2 animate-in fade-in slide-in-from-top-1 transition-all ${
+            selectedWarehouseSubArea === 'warehouse-accessories'
+              ? 'bg-blue-50/90 border-blue-300'
+              : 'bg-amber-50/90 border-amber-300'
+          }`}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                <div className={`w-7 h-7 rounded-lg text-white flex items-center justify-center shadow-xs shrink-0 transition-colors ${
+                  selectedWarehouseSubArea === 'warehouse-accessories' ? 'bg-blue-600' : 'bg-amber-600'
+                }`}>
+                  <Warehouse className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className={`text-xs font-black uppercase tracking-wider ${
+                    selectedWarehouseSubArea === 'warehouse-accessories' ? 'text-blue-950' : 'text-amber-950'
+                  }`}>
+                    Pilih Spesifik Area pada Warehouse:
+                  </h4>
+                  <p className={`text-[11px] font-medium ${
+                    selectedWarehouseSubArea === 'warehouse-accessories' ? 'text-blue-800' : 'text-amber-800'
+                  }`}>
+                    Silakan pilih sub-area warehouse untuk memuat checksheet &amp; input foto temuan spesifik:
+                  </p>
+                </div>
+              </div>
+              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded border transition-colors ${
+                selectedWarehouseSubArea === 'warehouse-accessories'
+                  ? 'bg-blue-100 text-blue-900 border-blue-300'
+                  : 'bg-amber-200 text-amber-900 border-amber-300'
+              }`}>
+                Aktif: {activeWarehouseSubArea.name}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+              {WAREHOUSE_SUB_AREAS.map((sub, sIdx) => {
+                const isSubSelected = selectedWarehouseSubArea === sub.id;
+                const isAccessories = sub.id === 'warehouse-accessories';
+                const SubIcon = sub.icon;
+
+                // Color styling: Distinct Blue for Warehouse Accessories, Amber for Warehouse Fabric
+                const buttonClasses = isAccessories
+                  ? isSubSelected
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm ring-2 ring-blue-500/30'
+                    : 'bg-white hover:bg-blue-50/80 text-blue-950 border-blue-200 shadow-2xs'
+                  : isSubSelected
+                    ? 'bg-amber-600 text-white border-amber-600 shadow-sm ring-2 ring-amber-500/30'
+                    : 'bg-white hover:bg-amber-100/60 text-amber-950 border-amber-200 shadow-2xs';
+
+                const iconBoxClasses = isAccessories
+                  ? isSubSelected ? 'bg-white text-blue-700' : 'bg-blue-100 text-blue-700'
+                  : isSubSelected ? 'bg-white text-amber-800' : 'bg-amber-100 text-amber-700';
+
+                const subAreaTagClasses = isAccessories
+                  ? isSubSelected ? 'text-blue-100' : 'text-blue-700'
+                  : isSubSelected ? 'text-amber-100' : 'text-amber-700';
+
+                const badgeClasses = isAccessories
+                  ? 'bg-blue-700 text-white px-1.5 py-0.2 rounded border border-blue-400'
+                  : 'bg-amber-700 text-white px-1.5 py-0.2 rounded border border-amber-400';
+
+                const descClasses = isAccessories
+                  ? isSubSelected ? 'text-blue-100' : 'text-slate-500'
+                  : isSubSelected ? 'text-amber-100' : 'text-slate-500';
+
+                return (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => setSelectedWarehouseSubArea(sub.id)}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${buttonClasses}`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${iconBoxClasses}`}>
+                      <SubIcon className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[10px] font-extrabold uppercase ${subAreaTagClasses}`}>
+                          Sub-Area 0{sIdx + 1}
+                        </span>
+                        {isSubSelected && (
+                          <span className={`text-[9px] font-bold ${badgeClasses}`}>
+                            Dipilih
+                          </span>
+                        )}
+                      </div>
+                      <h5 className="text-xs font-black truncate">
+                        {sub.name}
+                      </h5>
+                      <p className={`text-[10px] truncate ${descClasses}`}>
+                        {sub.description}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 3 Sub-Area Buttons untuk Distribusi: "PPA" (Teal), "Supermarket" (Purple), dan "Heat Transfer" (Rose) */}
+        {isDistribusi && (
+          <div className={`p-4 rounded-2xl border-2 shadow-xs space-y-2 animate-in fade-in slide-in-from-top-1 transition-all ${
+            selectedDistribusiSubArea === 'ppa'
+              ? 'bg-teal-50/90 border-teal-300'
+              : selectedDistribusiSubArea === 'supermarket'
+              ? 'bg-purple-50/90 border-purple-300'
+              : 'bg-rose-50/90 border-rose-300'
+          }`}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className={`w-7 h-7 rounded-lg text-white flex items-center justify-center shadow-xs shrink-0 transition-colors ${
+                  selectedDistribusiSubArea === 'ppa'
+                    ? 'bg-teal-600'
+                    : selectedDistribusiSubArea === 'supermarket'
+                    ? 'bg-purple-600'
+                    : 'bg-rose-600'
+                }`}>
                   <Truck className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                  <h4 className={`text-xs font-black uppercase tracking-wider ${
+                    selectedDistribusiSubArea === 'ppa'
+                      ? 'text-teal-950'
+                      : selectedDistribusiSubArea === 'supermarket'
+                      ? 'text-purple-950'
+                      : 'text-rose-950'
+                  }`}>
                     Pilih Spesifik Area pada Distribusi:
                   </h4>
-                  <p className="text-[11px] text-emerald-700 font-medium">
+                  <p className={`text-[11px] font-medium ${
+                    selectedDistribusiSubArea === 'ppa'
+                      ? 'text-teal-800'
+                      : selectedDistribusiSubArea === 'supermarket'
+                      ? 'text-purple-800'
+                      : 'text-rose-800'
+                  }`}>
                     Silakan pilih sub-area distribusi untuk memuat checksheet &amp; input foto temuan spesifik:
                   </p>
                 </div>
               </div>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-200 text-emerald-900 border border-emerald-300">
+              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded border transition-colors ${
+                selectedDistribusiSubArea === 'ppa'
+                  ? 'bg-teal-100 text-teal-900 border-teal-300'
+                  : selectedDistribusiSubArea === 'supermarket'
+                  ? 'bg-purple-100 text-purple-900 border-purple-300'
+                  : 'bg-rose-100 text-rose-900 border-rose-300'
+              }`}>
                 Aktif: {activeSubArea.fullTitle}
               </span>
             </div>
@@ -843,29 +2457,66 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
               {DISTRIBUSI_SUB_AREAS.map((sub, sIdx) => {
                 const isSubSelected = selectedDistribusiSubArea === sub.id;
                 const SubIcon = sub.icon;
+
+                // Distinct thematic color styling:
+                // 1. PPA: Teal / Emerald
+                // 2. Supermarket: Purple / Violet
+                // 3. Heat Transfer: Rose / Flame Red
+                let buttonClasses = '';
+                let iconBoxClasses = '';
+                let subAreaTagClasses = '';
+                let badgeClasses = '';
+                let descClasses = '';
+
+                if (sub.id === 'ppa') {
+                  buttonClasses = isSubSelected
+                    ? 'bg-teal-600 text-white border-teal-600 shadow-sm ring-2 ring-teal-500/30'
+                    : 'bg-white hover:bg-teal-50/80 text-teal-950 border-teal-200 shadow-2xs';
+                  iconBoxClasses = isSubSelected ? 'bg-white text-teal-700' : 'bg-teal-100 text-teal-700';
+                  subAreaTagClasses = isSubSelected ? 'text-teal-100' : 'text-teal-700';
+                  badgeClasses = 'bg-teal-700 text-white px-1.5 py-0.2 rounded border border-teal-400';
+                  descClasses = isSubSelected ? 'text-teal-100' : 'text-slate-500';
+                } else if (sub.id === 'supermarket') {
+                  buttonClasses = isSubSelected
+                    ? 'bg-purple-600 text-white border-purple-600 shadow-sm ring-2 ring-purple-500/30'
+                    : 'bg-white hover:bg-purple-50/80 text-purple-950 border-purple-200 shadow-2xs';
+                  iconBoxClasses = isSubSelected ? 'bg-white text-purple-700' : 'bg-purple-100 text-purple-700';
+                  subAreaTagClasses = isSubSelected ? 'text-purple-100' : 'text-purple-700';
+                  badgeClasses = 'bg-purple-700 text-white px-1.5 py-0.2 rounded border border-purple-400';
+                  descClasses = isSubSelected ? 'text-purple-100' : 'text-slate-500';
+                } else {
+                  // heat-transfer
+                  buttonClasses = isSubSelected
+                    ? 'bg-rose-600 text-white border-rose-600 shadow-sm ring-2 ring-rose-500/30'
+                    : 'bg-white hover:bg-rose-50/80 text-rose-950 border-rose-200 shadow-2xs';
+                  iconBoxClasses = isSubSelected ? 'bg-white text-rose-700' : 'bg-rose-100 text-rose-700';
+                  subAreaTagClasses = isSubSelected ? 'text-rose-100' : 'text-rose-700';
+                  badgeClasses = 'bg-rose-700 text-white px-1.5 py-0.2 rounded border border-rose-400';
+                  descClasses = isSubSelected ? 'text-rose-100' : 'text-slate-500';
+                }
+
                 return (
                   <button
                     key={sub.id}
                     type="button"
-                    onClick={() => setSelectedDistribusiSubArea(sub.id)}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
-                      isSubSelected
-                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm ring-2 ring-emerald-500/30'
-                        : 'bg-white hover:bg-emerald-100/60 text-emerald-900 border-emerald-200 shadow-2xs'
-                    }`}
+                    onClick={() => {
+                      setSelectedDistribusiSubArea(sub.id);
+                      if (sub.id === 'supermarket' && activeCategory === 'security-brand') {
+                        setActiveCategory('6s');
+                      }
+                    }}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-3 ${buttonClasses}`}
                   >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      isSubSelected ? 'bg-white text-emerald-800' : 'bg-emerald-100 text-emerald-700'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${iconBoxClasses}`}>
                       <SubIcon className="w-4 h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between">
-                        <span className={`text-[10px] font-extrabold uppercase ${isSubSelected ? 'text-emerald-200' : 'text-emerald-600'}`}>
+                        <span className={`text-[10px] font-extrabold uppercase ${subAreaTagClasses}`}>
                           Sub-Area 0{sIdx + 1}
                         </span>
                         {isSubSelected && (
-                          <span className="text-[9px] font-bold bg-emerald-600 text-white px-1.5 py-0.2 rounded border border-emerald-400">
+                          <span className={`text-[9px] font-bold ${badgeClasses}`}>
                             Dipilih
                           </span>
                         )}
@@ -873,7 +2524,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                       <h5 className="text-xs font-black truncate">
                         {sub.name}
                       </h5>
-                      <p className={`text-[10px] truncate ${isSubSelected ? 'text-emerald-100' : 'text-slate-500'}`}>
+                      <p className={`text-[10px] truncate ${descClasses}`}>
                         {sub.fullTitle}
                       </p>
                     </div>
@@ -901,8 +2552,23 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
               {currentDepartment}
             </span>
             {isDistribusi && (
-              <span className="font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 text-[11px]">
+              <span className={`font-semibold px-2 py-0.5 rounded border text-[11px] ${
+                selectedDistribusiSubArea === 'ppa'
+                  ? 'text-teal-800 bg-teal-50 border-teal-200'
+                  : selectedDistribusiSubArea === 'supermarket'
+                  ? 'text-purple-800 bg-purple-50 border-purple-200'
+                  : 'text-rose-800 bg-rose-50 border-rose-200'
+              }`}>
                 Sub: {activeSubArea.fullTitle}
+              </span>
+            )}
+            {isWarehouse && (
+              <span className={`font-semibold px-2 py-0.5 rounded border text-[11px] ${
+                selectedWarehouseSubArea === 'warehouse-accessories'
+                  ? 'text-blue-800 bg-blue-50 border-blue-200'
+                  : 'text-amber-800 bg-amber-50 border-amber-200'
+              }`}>
+                Sub: {activeWarehouseSubArea.name}
               </span>
             )}
           </p>
@@ -911,8 +2577,78 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
         {/* Section Heading & Category Tabs */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-black text-slate-900 tracking-tight">
-              {activeCategory === 'stop6' ? 'Safety (STOP-6)' : 'Framework 6S (Housekeeping & K3)'}
+            <h2 className="text-lg font-black text-slate-900 tracking-tight flex items-center gap-2 flex-wrap">
+              <span>
+                {activeCategory === 'stop6' 
+                  ? 'Safety (STOP-6)' 
+                  : activeCategory === 'security-brand'
+                  ? selectedAreaId === 'cutting'
+                    ? 'Security Control (Paper Pattern Storage)'
+                    : selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'ppa'
+                    ? 'Security Brand Aspect (Label Ataca Storage)'
+                    : selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'heat-transfer'
+                    ? 'Security Brand Aspect (Paper Pattern Storage)'
+                    : selectedAreaId === 'sewing'
+                    ? 'Security Brand Aspect (Label Ataca Storage)'
+                    : 'Security Brand Aspect (Security & Brand Protection)'
+                  : 'Framework 6S (Housekeeping & K3)'}
+              </span>
+              {activeCategory === '6s' && selectedAreaId === 'warehouse' && (
+                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${
+                  selectedWarehouseSubArea === 'warehouse-accessories'
+                    ? 'bg-blue-100 text-blue-900 border-blue-300'
+                    : 'bg-amber-100 text-amber-900 border-amber-300'
+                }`}>
+                  {selectedWarehouseSubArea === 'warehouse-fabric'
+                    ? '12 Point Pengecekan Warehouse Fabric'
+                    : '10 Point Pengecekan Warehouse Accessories'}
+                </span>
+              )}
+              {activeCategory === '6s' && selectedAreaId === 'cutting' && (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-900 border border-blue-300">
+                  13 Point Pengecekan Cutting (Framework 6S)
+                </span>
+              )}
+              {activeCategory === '6s' && selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'ppa' && (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
+                  11 Point Pengecekan PPA Auto &amp; Manual (Framework 6S)
+                </span>
+              )}
+              {activeCategory === '6s' && selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'supermarket' && (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-900 border border-purple-300">
+                  8 Point Pengecekan Supermarket (Framework 6S)
+                </span>
+              )}
+              {activeCategory === '6s' && selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'heat-transfer' && (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-900 border border-rose-300">
+                  10 Point Pengecekan Heat Transfer (Framework 6S)
+                </span>
+              )}
+              {activeCategory === '6s' && selectedAreaId === 'sewing' && (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-900 border border-violet-300">
+                  12 Point Pengecekan Sewing (Framework 6S)
+                </span>
+              )}
+              {activeCategory === '6s' && selectedAreaId === 'finish-good' && (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-900 border border-sky-300">
+                  10 Point Pengecekan Finish Good (Framework 6S)
+                </span>
+              )}
+              {activeCategory === 'security-brand' && (
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-900 border border-indigo-300">
+                  {selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'ppa'
+                    ? '2 Point Security Brand PPA (Label Ataca)'
+                    : selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'heat-transfer'
+                    ? '2 Point Security Brand Heat Transfer (Paper Pattern)'
+                    : selectedAreaId === 'sewing'
+                    ? '2 Point Security Brand Sewing (Label Ataca)'
+                    : selectedAreaId === 'cutting'
+                    ? '2 Point Security Control Cutting'
+                    : selectedAreaId === 'warehouse' && selectedWarehouseSubArea === 'warehouse-fabric'
+                    ? '5 Point Security Brand Warehouse Fabric'
+                    : 'Brand Protection & Security Pillar'}
+                </span>
+              )}
             </h2>
           </div>
 
@@ -921,7 +2657,15 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
               onClick={() => setActiveCategory('stop6')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeCategory === 'stop6'
-                  ? 'bg-amber-600 text-white shadow-xs'
+                  ? selectedAreaId === 'warehouse' && selectedWarehouseSubArea === 'warehouse-accessories'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : selectedAreaId === 'distribusi'
+                    ? selectedDistribusiSubArea === 'ppa'
+                      ? 'bg-teal-600 text-white shadow-xs'
+                      : selectedDistribusiSubArea === 'supermarket'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'bg-rose-600 text-white shadow-xs'
+                    : 'bg-amber-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -931,12 +2675,38 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
               onClick={() => setActiveCategory('6s')}
               className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeCategory === '6s'
-                  ? 'bg-amber-600 text-white shadow-xs'
+                  ? selectedAreaId === 'warehouse' && selectedWarehouseSubArea === 'warehouse-accessories'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : selectedAreaId === 'distribusi'
+                    ? selectedDistribusiSubArea === 'ppa'
+                      ? 'bg-teal-600 text-white shadow-xs'
+                      : selectedDistribusiSubArea === 'supermarket'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'bg-rose-600 text-white shadow-xs'
+                    : 'bg-amber-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Framework 6S
             </button>
+            {!(selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'supermarket') && (
+              <button
+                onClick={() => setActiveCategory('security-brand')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeCategory === 'security-brand'
+                    ? selectedAreaId === 'warehouse' && selectedWarehouseSubArea === 'warehouse-accessories'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : selectedAreaId === 'distribusi'
+                      ? selectedDistribusiSubArea === 'ppa'
+                        ? 'bg-teal-600 text-white shadow-xs'
+                        : 'bg-rose-600 text-white shadow-xs'
+                      : 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {selectedAreaId === 'cutting' ? 'Security Control' : 'Security Brand Aspect'}
+              </button>
+            )}
           </div>
         </div>
 
@@ -948,7 +2718,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
             const draft = draftFindings[key];
             const isHazard = currentScore === 0;
             const isSafe = currentScore === 1;
-            const is5R = activeCategory === '6s' || chk.category === '5R';
+            const is5R = activeCategory === '6s' || activeCategory === 'security-brand' || chk.category === '5R';
 
             return (
               <div 
@@ -966,10 +2736,25 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                   {/* LEFT SIDE: Checkpoint Title, Question, and the 2 Score Boxes (1 vs 0) */}
                   <div className="lg:col-span-7 space-y-4">
                     {/* Header: Code & Title */}
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 flex-wrap">
                       <span className="text-base sm:text-lg font-black text-slate-900 font-mono">
                         {chk.code}
                       </span>
+                      {chk.pillar && (
+                        <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${
+                          chk.pillar === 'Sort'
+                            ? 'bg-amber-100 text-amber-900 border-amber-300'
+                            : chk.pillar === 'Set in order'
+                            ? 'bg-blue-100 text-blue-900 border-blue-300'
+                            : chk.pillar === 'Shine'
+                            ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                            : chk.pillar === 'Standardize'
+                            ? 'bg-purple-100 text-purple-900 border-purple-300'
+                            : 'bg-rose-100 text-rose-900 border-rose-300'
+                        }`}>
+                          {chk.pillar}
+                        </span>
+                      )}
                       <h3 className="text-sm sm:text-base font-extrabold text-slate-900 italic">
                         {chk.title}
                       </h3>
@@ -1173,18 +2958,6 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                                   className="hidden"
                                 />
                               </label>
-                            </div>
-
-                            {/* Preset Sample Quick Button */}
-                            <div className="mt-2 text-[10px] text-slate-500 flex items-center justify-center gap-1">
-                              <span>Atau coba foto contoh:</span>
-                              <button
-                                type="button"
-                                onClick={() => handlePickPresetPhoto(chk.id, SAMPLE_PHOTO_PRESETS[0].url)}
-                                className="text-amber-700 underline font-semibold hover:text-amber-900 cursor-pointer"
-                              >
-                                Preset K3/Kabel
-                              </button>
                             </div>
                           </div>
                         )}
