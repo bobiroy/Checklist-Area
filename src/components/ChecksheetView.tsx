@@ -2197,7 +2197,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-32">
+    <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto px-0 sm:px-2 py-1 sm:py-4 pb-36 md:pb-20">
       {/* Top Banner Alert if any */}
       {alertInfo && (
         <div className={`p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md animate-in fade-in border-2 ${
@@ -2267,18 +2267,18 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
 
       {/* Control Bar: Factory Selection, Assessor Input & Print */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
             <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-amber-600" />
+              <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 shrink-0" />
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Unit Pabrik:</span>
             </div>
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-4 sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto">
               {(['AOI 1', 'AOI 2', 'AOI 3', 'DC'] as FactoryOption[]).map(fac => (
                 <button
                   key={fac}
                   onClick={() => setSelectedFactory(fac)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-2 sm:px-3 py-2 sm:py-1.5 min-h-[38px] rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center justify-center ${
                     selectedFactory === fac
                       ? 'bg-amber-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
@@ -2290,23 +2290,25 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full md:w-auto">
             {onGoToInspectionTable && (
               <button
                 onClick={onGoToInspectionTable}
-                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3 sm:px-3.5 py-2.5 sm:py-2 min-h-[40px] bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
               >
-                <Eye className="w-4 h-4 text-slate-600" />
-                <span>Lihat Tabel Temuan ({findings.length})</span>
+                <Eye className="w-4 h-4 text-slate-600 shrink-0" />
+                <span className="sm:hidden">Temuan ({findings.length})</span>
+                <span className="hidden sm:inline">Lihat Tabel Temuan ({findings.length})</span>
               </button>
             )}
 
             <button
               onClick={() => window.print()}
-              className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-xl border border-slate-300 shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="px-3 sm:px-3.5 py-2.5 sm:py-2 min-h-[40px] bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-xl border border-slate-300 shadow-2xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
               title="Cetak lembar checksheet ke kertas atau PDF"
             >
-              <Printer className="w-4 h-4 text-amber-600" />
+              <Printer className="w-4 h-4 text-amber-600 shrink-0" />
+              <span className="sm:hidden">Cetak PDF</span>
               <span className="hidden sm:inline">Cetak Checksheet (Print)</span>
             </button>
           </div>
@@ -2387,7 +2389,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
           {CHECK_AREAS.map((area, idx) => {
             const isSelected = area.id === selectedAreaId;
             const AreaIcon = area.icon;
@@ -2417,7 +2419,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
               <button
                 key={area.id}
                 onClick={() => setSelectedAreaId(area.id)}
-                className={`text-left p-3.5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group ${
+                className={`text-left p-3 sm:p-3.5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group min-w-0 ${
                   isSelected
                     ? 'bg-amber-500/10 border-amber-500 shadow-sm ring-2 ring-amber-500/20'
                     : 'bg-white hover:bg-slate-50/80 border-slate-200/90 shadow-2xs'
@@ -2713,12 +2715,12 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
       </div>
 
       {/* Main Checksheet Form Card (Styled to match the physical checksheet image uploaded by the user) */}
-      <div className="bg-white rounded-2xl border-2 border-slate-300 shadow-sm p-5 sm:p-8 space-y-6">
+      <div className="bg-white rounded-2xl border-2 border-slate-300 shadow-sm p-3.5 sm:p-8 space-y-5 sm:space-y-6">
         
         {/* TOP TITLE BOX: EXACTLY MATCHING USER ATTACHED IMAGE (Bordered Framed Box) */}
-        <div className="flex flex-col items-center justify-center pt-2 pb-4 border-b border-slate-200/80">
-          <div className="border-2 border-slate-900 px-8 sm:px-14 py-2.5 bg-white shadow-xs">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-wider text-center font-mono uppercase">
+        <div className="flex flex-col items-center justify-center pt-1 sm:pt-2 pb-4 border-b border-slate-200/80">
+          <div className="border-2 border-slate-900 px-4 sm:px-14 py-2 sm:py-2.5 bg-white shadow-xs max-w-full">
+            <h1 className="text-base sm:text-2xl font-black text-slate-950 tracking-wider text-center font-mono uppercase">
               {currentBoxTitle}
             </h1>
           </div>
@@ -2828,10 +2830,12 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
             </h2>
           </div>
 
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <div className={`grid w-full sm:w-auto sm:inline-flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 ${
+            selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'supermarket' ? 'grid-cols-2' : 'grid-cols-3'
+          }`}>
             <button
               onClick={() => setActiveCategory('stop6')}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-2 sm:px-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-0 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center justify-center ${
                 activeCategory === 'stop6'
                   ? selectedAreaId === 'warehouse' && selectedWarehouseSubArea === 'warehouse-accessories'
                     ? 'bg-blue-600 text-white shadow-xs'
@@ -2845,11 +2849,12 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Safety (STOP-6)
+              <span className="sm:hidden">STOP-6</span>
+              <span className="hidden sm:inline">Safety (STOP-6)</span>
             </button>
             <button
               onClick={() => setActiveCategory('6s')}
-              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-2 sm:px-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-0 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center justify-center ${
                 activeCategory === '6s'
                   ? selectedAreaId === 'warehouse' && selectedWarehouseSubArea === 'warehouse-accessories'
                     ? 'bg-blue-600 text-white shadow-xs'
@@ -2863,12 +2868,13 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Framework 6S
+              <span className="sm:hidden">Framework 6S</span>
+              <span className="hidden sm:inline">Framework 6S</span>
             </button>
             {!(selectedAreaId === 'distribusi' && selectedDistribusiSubArea === 'supermarket') && (
               <button
                 onClick={() => setActiveCategory('security-brand')}
-                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`px-2 sm:px-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-0 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center justify-center ${
                   activeCategory === 'security-brand'
                     ? selectedAreaId === 'warehouse' && selectedWarehouseSubArea === 'warehouse-accessories'
                       ? 'bg-blue-600 text-white shadow-xs'
@@ -2880,7 +2886,8 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                {selectedAreaId === 'cutting' ? 'Security Control' : 'Security Brand Aspect'}
+                <span className="sm:hidden">{selectedAreaId === 'cutting' ? 'Security' : 'Security Brand'}</span>
+                <span className="hidden sm:inline">{selectedAreaId === 'cutting' ? 'Security Control' : 'Security Brand Aspect'}</span>
               </button>
             )}
           </div>
@@ -2959,14 +2966,14 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                     </div>
 
                     {/* Two Score Boxes: 1 (Aman / Ya Terpenuhi) vs 0 (Bahaya / Tidak Terpenuhi) */}
-                    <div className="pt-2 flex flex-wrap items-start gap-4 sm:gap-6">
+                    <div className="pt-2 grid grid-cols-2 sm:flex sm:flex-wrap items-start gap-2.5 sm:gap-6">
                       
                       {/* Box 1: Ya Terpenuhi (5R) / Tidak Ada Potensi Bahaya (STOP-6) */}
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2 sm:p-0 rounded-xl bg-slate-50/70 sm:bg-transparent border border-slate-200/80 sm:border-0">
                         <button
                           type="button"
                           onClick={() => handleSetScore(chk.id, 1)}
-                          className={`w-16 sm:w-20 border-2 rounded-sm overflow-hidden text-center transition-all cursor-pointer ${
+                          className={`w-full sm:w-20 border-2 rounded-sm overflow-hidden text-center transition-all cursor-pointer ${
                             isSafe
                               ? 'border-emerald-600 ring-2 ring-emerald-500/30'
                               : 'border-slate-800 hover:border-emerald-500'
@@ -2977,29 +2984,29 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                           }`}>
                             1
                           </div>
-                          <div className={`h-9 sm:h-10 flex items-center justify-center font-bold text-sm ${
+                          <div className={`h-10 flex items-center justify-center font-bold text-sm ${
                             isSafe ? 'bg-emerald-100 text-emerald-800' : 'bg-white text-slate-400'
                           }`}>
                             {isSafe ? <Check className="w-5 h-5 text-emerald-700 stroke-[3]" /> : ''}
                           </div>
                         </button>
 
-                        <div className="text-left">
-                          <p className="text-xs font-bold text-slate-900">
+                        <div className="text-center sm:text-left">
+                          <p className="text-xs font-bold text-slate-900 leading-tight">
                             {is5R ? 'ya, terpenuhi' : 'tidak ada potensi bahaya'}
                           </p>
-                          <p className="text-[11px] text-blue-600 italic leading-tight">
+                          <p className="text-[11px] text-blue-600 italic leading-tight mt-0.5">
                             {is5R ? 'yes, fulfilled / compliant' : 'no, there are no potential for harm'}
                           </p>
                         </div>
                       </div>
 
                       {/* Box 0: Tidak Terpenuhi (5R) / Ya, Ada Potensi Bahaya (STOP-6) */}
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2 sm:p-0 rounded-xl bg-slate-50/70 sm:bg-transparent border border-slate-200/80 sm:border-0">
                         <button
                           type="button"
                           onClick={() => handleSetScore(chk.id, 0)}
-                          className={`w-16 sm:w-20 border-2 rounded-sm overflow-hidden text-center transition-all cursor-pointer ${
+                          className={`w-full sm:w-20 border-2 rounded-sm overflow-hidden text-center transition-all cursor-pointer ${
                             isHazard
                               ? 'border-rose-600 ring-2 ring-rose-500/30'
                               : 'border-slate-800 hover:border-rose-500'
@@ -3010,18 +3017,18 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                           }`}>
                             0
                           </div>
-                          <div className={`h-9 sm:h-10 flex items-center justify-center font-bold text-sm ${
+                          <div className={`h-10 flex items-center justify-center font-bold text-sm ${
                             isHazard ? 'bg-rose-100 text-rose-800' : 'bg-white text-slate-400'
                           }`}>
                             {isHazard ? <AlertTriangle className="w-5 h-5 text-rose-600 stroke-[2.5]" /> : ''}
                           </div>
                         </button>
 
-                        <div className="text-left">
-                          <p className="text-xs font-bold text-slate-900">
+                        <div className="text-center sm:text-left">
+                          <p className="text-xs font-bold text-slate-900 leading-tight">
                             {is5R ? 'tidak terpenuhi' : 'ya, ada potensi bahaya'}
                           </p>
-                          <p className="text-[11px] text-blue-600 italic leading-tight">
+                          <p className="text-[11px] text-blue-600 italic leading-tight mt-0.5">
                             {is5R ? 'not fulfilled / non-compliant' : 'yes, there is potential for harm'}
                           </p>
                         </div>
@@ -3106,17 +3113,17 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                           </div>
                         ) : (
                           <div className="border border-dashed border-slate-300 rounded-lg p-2.5 bg-slate-50 hover:bg-slate-100 transition-colors text-center">
-                            <div className="flex items-center justify-center gap-2">
+                            <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-center gap-2">
                               {/* Camera Input */}
-                              <label className={`px-3 py-1.5 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center gap-1.5 cursor-pointer ${
+                              <label className={`px-3 py-2 sm:py-1.5 min-h-[42px] sm:min-h-0 text-white text-xs font-bold rounded-lg shadow-2xs flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap ${
                                 compressingId === chk.id ? 'bg-amber-700 opacity-80 cursor-wait' : 'bg-amber-600 hover:bg-amber-700'
                               }`}>
                                 {compressingId === chk.id ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                                 ) : (
-                                  <Camera className="w-3.5 h-3.5" />
+                                  <Camera className="w-3.5 h-3.5 shrink-0" />
                                 )}
-                                <span>{compressingId === chk.id ? 'Memproses Foto...' : 'Kamera HP'}</span>
+                                <span>{compressingId === chk.id ? 'Memproses...' : 'Kamera HP'}</span>
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -3128,8 +3135,8 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                               </label>
 
                               {/* Upload File */}
-                              <label className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg border border-slate-300 flex items-center gap-1.5 cursor-pointer">
-                                <Upload className="w-3.5 h-3.5" />
+                              <label className="px-3 py-2 sm:py-1.5 min-h-[42px] sm:min-h-0 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg border border-slate-300 flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap">
+                                <Upload className="w-3.5 h-3.5 shrink-0" />
                                 <span>Pilih Gambar</span>
                                 <input
                                   type="file"
@@ -3178,7 +3185,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                       </div>
 
                       {/* PIC & Priority Selector */}
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-2">
                         <div>
                           <label className="block text-[10px] font-bold text-slate-600 mb-0.5">
                             PIC Area:
@@ -3188,7 +3195,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                             value={draft?.pic !== undefined ? draft.pic : (customPicName || '')}
                             onChange={(e) => handleUpdateDraft(chk.id, 'pic', e.target.value)}
                             placeholder="Ketik nama PIC..."
-                            className="w-full px-2 py-1 text-[11px] border border-slate-300 rounded bg-white text-slate-900 placeholder:text-slate-400 font-medium"
+                            className="w-full px-2.5 py-2 sm:py-1 text-xs sm:text-[11px] border border-slate-300 rounded-lg bg-white text-slate-900 placeholder:text-slate-400 font-medium"
                           />
                         </div>
                         <div>
@@ -3198,7 +3205,7 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
                           <select
                             value={draft?.priority || chk.defaultPriority}
                             onChange={(e) => handleUpdateDraft(chk.id, 'priority', e.target.value as PriorityLevel)}
-                            className="w-full px-2 py-1 text-[11px] border border-slate-300 rounded bg-white font-medium"
+                            className="w-full px-2.5 py-2 sm:py-1 text-xs sm:text-[11px] border border-slate-300 rounded-lg bg-white font-medium"
                           >
                             <option value="Critical">Critical (Sangat Kritis)</option>
                             <option value="High">High (Tinggi)</option>
@@ -3355,9 +3362,9 @@ export const ChecksheetView: React.FC<ChecksheetViewProps> = ({
 
       </div>
 
-      {/* Sticky Floating Mobile Bar for Unsaved Checksheet Findings */}
+      {/* Sticky Floating Mobile Bar for Unsaved Checksheet Findings (sits cleanly above mobile bottom nav bar) */}
       {unsavedCheckpoints.length > 0 && (
-        <div className="no-print fixed bottom-3 left-3 right-3 z-40 sm:left-auto sm:right-6 sm:w-auto sm:min-w-[380px]">
+        <div className="no-print fixed bottom-[72px] md:bottom-4 left-3 right-3 z-30 sm:left-auto sm:right-6 sm:w-auto sm:min-w-[380px]">
           <div className="bg-slate-900 text-white p-3 rounded-2xl shadow-2xl border border-amber-500/50 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs font-black text-amber-300 truncate">

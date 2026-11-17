@@ -347,21 +347,21 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 pb-12 animate-in fade-in duration-300">
+    <div className="space-y-5 sm:space-y-6 pb-6 sm:pb-12 animate-in fade-in duration-300">
       {/* ============================================================== */}
       {/* 1. FACTORY SELECTOR: STRICTLY 1 PER PILIHAN (SINGLE-SELECTION) */}
       {/* ============================================================== */}
-      <div className="bg-white rounded-2xl p-5 border-2 border-amber-300/80 shadow-md">
+      <div className="bg-white rounded-2xl p-4 sm:p-5 border-2 border-amber-300/80 shadow-md">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-amber-500 text-white shadow-xs">
+            <div className="flex items-center flex-wrap gap-2">
+              <span className="p-1.5 rounded-lg bg-amber-500 text-white shadow-xs shrink-0">
                 <Building2 className="w-4 h-4" />
               </span>
               <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
                 Factory Selector &bull; Pilih 1 Factory
               </h2>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap">
                 Mode: 1 Pilihan Tunggal
               </span>
             </div>
@@ -371,22 +371,22 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
           </div>
 
           {/* Quick Segmented Switcher for 1 per choice */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start md:self-auto border border-slate-200">
+          <div className="grid grid-cols-4 sm:flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-full md:w-auto border border-slate-200">
             {FACTORIES.map((fac) => {
               const isCurrent = selectedFactory === fac;
               return (
                 <button
                   key={`pill-${fac}`}
                   onClick={() => handleSelectSingleFactory(fac)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-2 sm:px-3.5 py-2 sm:py-1.5 min-h-[38px] rounded-lg text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 whitespace-nowrap ${
                     isCurrent
                       ? 'bg-slate-900 text-white shadow-sm ring-1 ring-slate-800'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/70'
                   }`}
                 >
-                  <Factory className="w-3.5 h-3.5" />
+                  <Factory className="w-3.5 h-3.5 hidden sm:inline shrink-0" />
                   <span>{fac}</span>
-                  {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>}
+                  {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>}
                 </button>
               );
             })}
@@ -722,11 +722,11 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
       {/* ============================================================== */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {/* Table & Filter Header */}
-        <div className="p-5 border-b border-slate-100 space-y-4">
+        <div className="p-4 sm:p-5 border-b border-slate-100 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-amber-600" />
+              <div className="flex items-center flex-wrap gap-2">
+                <Building2 className="w-5 h-5 text-amber-600 shrink-0" />
                 <h2 className="text-base font-extrabold text-slate-900">
                   Daftar Temuan Lapangan &bull; {selectedFactory}
                 </h2>
@@ -742,10 +742,10 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
             </div>
 
             {/* Filter Status Pills */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start sm:self-auto overflow-x-auto">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-1 bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
               <button
                 onClick={() => setStatusFilter('ALL')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-2.5 sm:px-3 py-2 sm:py-1.5 min-h-[38px] rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center justify-center ${
                   statusFilter === 'ALL'
                     ? 'bg-white text-slate-900 shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -755,7 +755,7 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
               </button>
               <button
                 onClick={() => setStatusFilter('Open')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-2.5 sm:px-3 py-2 sm:py-1.5 min-h-[38px] rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center justify-center ${
                   statusFilter === 'Open'
                     ? 'bg-rose-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -765,7 +765,7 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
               </button>
               <button
                 onClick={() => setStatusFilter('In Progress')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-2.5 sm:px-3 py-2 sm:py-1.5 min-h-[38px] rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center justify-center ${
                   statusFilter === 'In Progress'
                     ? 'bg-amber-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -775,7 +775,7 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
               </button>
               <button
                 onClick={() => setStatusFilter('Closed')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-2.5 sm:px-3 py-2 sm:py-1.5 min-h-[38px] rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center justify-center ${
                   statusFilter === 'Closed'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900'
@@ -855,7 +855,120 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* Mobile Card View (< md) */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {tableFindings.map((finding) => {
+              const itemFactory = getFindingFactory(finding);
+              const factoryStyle = FACTORY_INFO[itemFactory];
+
+              return (
+                <div key={`m-${finding.id}`} className="p-4 space-y-3 bg-white">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-black border ${factoryStyle.badgeBg}`}>
+                        {itemFactory}
+                      </span>
+                      <span className="font-mono text-[10px] text-slate-500 font-semibold">
+                        {finding.id}
+                      </span>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
+                      finding.status === 'Closed'
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                        : finding.status === 'In Progress' || finding.status === 'Pending Verification'
+                        ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                        : 'bg-rose-100 text-rose-800 border border-rose-300'
+                    }`}>
+                      {finding.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <button
+                      type="button"
+                      onClick={() => onSelectPhotoProof(finding)}
+                      className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-slate-200 bg-slate-900 cursor-pointer"
+                    >
+                      {finding.attachmentUrl ? (
+                        <img
+                          src={finding.attachmentUrl}
+                          alt="Bukti"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                          <Camera className="w-5 h-5 text-slate-400" />
+                        </div>
+                      )}
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500 mb-0.5">
+                        <span className="font-bold text-slate-900 truncate">{finding.area}</span>
+                        <span>&bull;</span>
+                        <span className="shrink-0">{finding.date}</span>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-800 leading-snug line-clamp-2">
+                        {finding.finding}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[10px]">
+                        <span className="px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                          {finding.category}
+                        </span>
+                        <span className="font-semibold text-amber-900 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                          PIC: {finding.pic}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => onSelectPhotoProof(finding)}
+                      className="flex-1 min-h-[40px] px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-amber-50 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Camera className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Foto</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onEditFinding(finding)}
+                      className="flex-1 min-h-[40px] px-3 py-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Edit</span>
+                    </button>
+                    {finding.status !== 'Closed' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (currentUser && currentUser.role !== 'admin') {
+                            onOpenLoginModal?.('Hanya Admin yang berwenang menutup temuan (Closed).');
+                            return;
+                          }
+                          onQuickUpdateStatus(finding.id, 'Closed');
+                        }}
+                        className={`flex-1 min-h-[40px] px-3 py-2 rounded-xl text-xs font-bold border flex items-center justify-center gap-1 ${
+                          currentUser && currentUser.role !== 'admin'
+                            ? 'bg-slate-100 text-slate-400 border-slate-300 cursor-not-allowed'
+                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-300 cursor-pointer'
+                        }`}
+                      >
+                        {currentUser && currentUser.role !== 'admin' && (
+                          <Lock className="w-3 h-3 text-rose-500" />
+                        )}
+                        <span>{currentUser && currentUser.role !== 'admin' ? 'Admin' : 'Tutup'}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table View (>= md) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50/80 text-slate-700 font-bold border-b border-slate-200 select-none">
                 <tr>
@@ -1035,6 +1148,7 @@ export const FactoryDashboardView: React.FC<FactoryDashboardViewProps> = ({
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
     </div>

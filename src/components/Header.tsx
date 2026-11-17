@@ -69,206 +69,321 @@ export const Header: React.FC<HeaderProps> = ({
   const closureRate = totalFindings > 0 ? Math.round((closedCount / totalFindings) * 100) : 0;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-      {/* Top status bar */}
-      <div className="bg-slate-900 text-slate-300 text-xs px-4 sm:px-6 py-1.5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center flex-wrap gap-2.5 sm:gap-3">
-          <span className="flex items-center gap-1.5 font-mono text-[11px] text-amber-400 font-semibold shrink-0">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            GENBA MONITORING: ONLINE
-          </span>
-          <span className="hidden sm:inline-block text-slate-600">|</span>
-          <span className="flex items-center gap-1.5 text-slate-200 text-[11px]">
-            <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="font-semibold text-white">Live:</span>
-            <span>{formattedDate}</span>
-            <span className="hidden md:inline font-mono text-[10px] text-slate-400">({formattedTime} WIB)</span>
-            <span>&bull;</span>
-            <span className="font-bold text-amber-300">PT Apparel One Indonesia</span>
-          </span>
+    <>
+      <header className="no-print sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+        {/* Top status bar (Desktop & Tablet only to avoid eating mobile screen height) */}
+        <div className="hidden md:flex bg-slate-900 text-slate-300 text-xs px-6 py-1.5 flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center flex-wrap gap-3">
+            <span className="flex items-center gap-1.5 font-mono text-[11px] text-amber-400 font-semibold shrink-0">
+              GENBA MONITORING
+            </span>
+            <span className="text-slate-600">|</span>
+            <span className="flex items-center gap-1.5 text-slate-200 text-[11px]">
+              <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span>{formattedDate}</span>
+              <span className="font-mono text-[10px] text-slate-400">({formattedTime} WIB)</span>
+              <span>&bull;</span>
+              <span className="font-bold text-amber-300">PT Apparel One Indonesia</span>
+            </span>
 
-          <span className="hidden md:inline-block text-slate-600">|</span>
+            <span className="text-slate-600">|</span>
 
-          {/* Realtime KPI Pill badges (Di sebelah tulisan PT Apparel One Indonesia) */}
-          <div className="flex items-center gap-2 text-[11px]">
-            <span className="flex items-center gap-1 text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800/60 font-medium">
-              <AlertCircle className="w-3 h-3" />
-              {openCount} Open
-            </span>
-            <span className="flex items-center gap-1 text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60 font-medium">
-              <TrendingUp className="w-3 h-3" />
-              {inProgressCount} In Progress
-            </span>
-            <span className="flex items-center gap-1 text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 font-medium">
-              <CheckCircle2 className="w-3 h-3" />
-              {closedCount} Closed ({closureRate}%)
-            </span>
+            {/* Realtime KPI summary */}
+            <div className="flex items-center gap-2 text-[11px] tabular-nums">
+              <span className="flex items-center gap-1 text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800/60 font-medium">
+                <AlertCircle className="w-3 h-3" />
+                {openCount} Open
+              </span>
+              <span className="flex items-center gap-1 text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/60 font-medium">
+                <TrendingUp className="w-3 h-3" />
+                {inProgressCount} In Progress
+              </span>
+              <span className="flex items-center gap-1 text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/60 font-medium">
+                <CheckCircle2 className="w-3 h-3" />
+                {closedCount} Closed ({closureRate}%)
+              </span>
+            </div>
           </div>
+
+          {/* Exit Button */}
+          {onLogout && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="text-[11px] font-semibold text-rose-300 hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 hover:border-rose-700 transition-colors cursor-pointer shrink-0 ml-auto whitespace-nowrap"
+              title="Keluar / Logout dari Sistem"
+            >
+              <LogOut className="w-3 h-3" />
+              <span>Keluar</span>
+            </button>
+          )}
         </div>
 
-        {/* Exit Button: Pojok Kanan Atas */}
-        {onLogout && (
-          <button
-            type="button"
-            onClick={onLogout}
-            className="text-[11px] font-semibold text-rose-300 hover:text-white flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 hover:border-rose-700 transition-colors cursor-pointer shrink-0 ml-auto"
-            title="Keluar / Logout dari Sistem"
-          >
-            <LogOut className="w-3 h-3" />
-            <span>Keluar</span>
-          </button>
-        )}
-      </div>
+        {/* Main Bar */}
+        <div className="max-w-7xl mx-auto px-3 sm:px-6">
+          <div className="flex items-center justify-between h-14 md:h-16 gap-2 sm:gap-4">
+            {/* Brand & Logo */}
+            <div 
+              className="flex items-center gap-2.5 sm:gap-3 select-none cursor-pointer group min-w-0"
+              onClick={() => onSelectTab('dashboard')}
+              title="Genba Kaizen Dashboard - PT Apparel One Indonesia"
+            >
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-white shadow-sm shadow-amber-500/20 shrink-0">
+                <Factory className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
 
-      {/* Main Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16 gap-4">
-          {/* Brand & Logo */}
-          <div 
-            className="flex items-center gap-3 select-none cursor-pointer group"
-            onClick={() => onSelectTab('dashboard')}
-            title="Genba Kaizen Dashboard - PT Apparel One Indonesia"
-          >
-            {/* Factory Brand Logo (Default) */}
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-white shadow-sm shadow-amber-500/20 shrink-0">
-              <Factory className="w-5 h-5 text-white" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight group-hover:text-amber-700 transition-colors whitespace-nowrap truncate">
+                    GENBA KAIZEN
+                  </span>
+                  <span className="hidden sm:inline-block text-[10px] font-extrabold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-300 whitespace-nowrap">
+                    FACTORY OPS
+                  </span>
+                </div>
+                <p className="hidden sm:block text-[11px] text-slate-500 font-medium truncate">
+                  PT Apparel One Indonesia &bull; Continuous Improvement &amp; Genba Walk
+                </p>
+              </div>
             </div>
 
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-base font-extrabold text-slate-900 tracking-tight group-hover:text-amber-700 transition-colors">
-                  GENBA KAIZEN
+            {/* Quick Action Buttons */}
+            <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+              {/* Role badge */}
+              <div
+                onClick={() => onOpenLoginModal?.()}
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl border shadow-2xs select-none min-h-[38px] ${
+                  onOpenLoginModal ? 'cursor-pointer' : ''
+                } ${
+                  currentUser.role === 'admin'
+                    ? 'bg-amber-50/90 border-amber-300 text-amber-950'
+                    : 'bg-blue-50/90 border-blue-300 text-blue-950'
+                }`}
+                title={`Role Aktif: ${currentUser.role === 'admin' ? 'Admin' : 'Member'}`}
+              >
+                <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                  currentUser.role === 'admin' 
+                    ? 'bg-amber-600 text-white shadow-xs' 
+                    : 'bg-blue-600 text-white shadow-xs'
+                }`}>
+                  {currentUser.role === 'admin' ? (
+                    <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                  ) : (
+                    <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                  )}
+                </div>
+
+                <span className="md:hidden text-[11px] font-extrabold uppercase tracking-tight whitespace-nowrap">
+                  {currentUser.role === 'admin' ? 'Admin' : 'Member'}
                 </span>
-                <span className="text-[10px] font-extrabold bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-300">
-                  FACTORY OPS
-                </span>
+
+                <div className="text-left hidden md:block">
+                  <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded whitespace-nowrap ${
+                    currentUser.role === 'admin'
+                      ? 'bg-amber-200 text-amber-950'
+                      : 'bg-blue-200 text-blue-950'
+                  }`}>
+                    Role: {currentUser.role === 'admin' ? 'Admin' : 'Member'}
+                  </span>
+                </div>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium">
-                PT Apparel One Indonesia &bull; Continuous Improvement &amp; Genba Walk
-              </p>
+
+              {/* Catat Temuan Baru Button */}
+              <button
+                id="header-add-finding-btn"
+                onClick={onOpenNewFindingModal}
+                className="flex items-center gap-1.5 px-3 sm:px-4 py-2 min-h-[38px] sm:min-h-[40px] bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm shadow-amber-600/30 transition-all cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <Plus className="w-4 h-4 shrink-0" />
+                <span className="sm:hidden">Temuan</span>
+                <span className="hidden sm:inline">Catat Temuan Baru</span>
+              </button>
+
+              {/* Mobile Logout Button (since top status bar is hidden on mobile) */}
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="md:hidden flex items-center justify-center w-[38px] h-[38px] rounded-xl bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 border border-rose-200 transition-colors cursor-pointer shrink-0"
+                  title="Keluar / Logout dari Sistem"
+                  aria-label="Keluar dari sistem"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Quick Action Buttons: Status Akun & Catat Temuan Baru */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* Status Pengguna Aktif (Informasi Akun Non-Interactive) */}
-            <div
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border shadow-2xs select-none ${
-                currentUser.role === 'admin'
-                  ? 'bg-amber-50/90 border-amber-300 text-amber-950'
-                  : 'bg-blue-50/90 border-blue-300 text-blue-950'
+          {/* Desktop Navigation Tabs (hidden on mobile where Bottom Nav Bar handles navigation cleanly) */}
+          <nav className="hidden md:flex items-center gap-1 overflow-x-auto no-scrollbar border-t border-slate-100 py-1">
+            <button
+              id="nav-tab-dashboard"
+              onClick={() => onSelectTab('dashboard')}
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeTab === 'dashboard'
+                  ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                currentUser.role === 'admin' 
-                  ? 'bg-amber-600 text-white shadow-xs' 
-                  : 'bg-blue-600 text-white shadow-xs'
-              }`}>
-                {currentUser.role === 'admin' ? (
-                  <ShieldCheck className="w-4 h-4 text-white" />
-                ) : (
-                  <User className="w-4 h-4 text-white" />
-                )}
-              </div>
-
-              <div className="text-left hidden sm:block">
-                <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                  currentUser.role === 'admin'
-                    ? 'bg-amber-200 text-amber-950'
-                    : 'bg-blue-200 text-blue-950'
-                }`}>
-                  Role: {currentUser.role === 'admin' ? 'Admin' : 'Member'}
-                </span>
-              </div>
-            </div>
-
-            {/* Catat Temuan Baru Button */}
-            <button
-              id="header-add-finding-btn"
-              onClick={onOpenNewFindingModal}
-              className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-xl text-xs sm:text-sm font-bold shadow-sm shadow-amber-600/30 transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Catat Temuan Baru</span>
+              <LayoutDashboard className="w-4 h-4 text-amber-600" />
+              <span>Genba Dashboard</span>
             </button>
-          </div>
+
+            <button
+              id="nav-tab-factory-dashboard"
+              onClick={() => onSelectTab('factory-dashboard')}
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeTab === 'factory-dashboard'
+                  ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Building2 className="w-4 h-4 text-amber-600" />
+              <span>Factory Dashboard</span>
+            </button>
+
+            <button
+              id="nav-tab-checksheet"
+              onClick={() => onSelectTab('checksheet')}
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeTab === 'checksheet'
+                  ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <CheckSquare className="w-4 h-4 text-emerald-600" />
+              <span>Checksheet</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-semibold font-mono">
+                5 Area
+              </span>
+            </button>
+
+            <button
+              id="nav-tab-leadership-walkthrough"
+              onClick={() => onSelectTab('leadership-walkthrough')}
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeTab === 'leadership-walkthrough'
+                  ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <ClipboardCheck className="w-4 h-4 text-blue-600" />
+              <span>Leadership Walkthrough &amp; Inspection</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 font-mono tabular-nums">
+                {findings.length}
+              </span>
+            </button>
+
+            <button
+              id="nav-tab-management-structure"
+              onClick={() => onSelectTab('management-structure')}
+              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                activeTab === 'management-structure'
+                  ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Network className="w-4 h-4 text-purple-600" />
+              <span>Management Structure</span>
+            </button>
+          </nav>
         </div>
+      </header>
 
-        {/* Navigation Tabs */}
-        <nav className="flex items-center gap-1 overflow-x-auto no-scrollbar border-t border-slate-100 py-1">
+      {/* Mobile Fixed Bottom Thumb Navigation Bar (5 clean single-word tabs) */}
+      <nav
+        aria-label="Navigasi Mobile"
+        className="no-print md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(15,23,42,0.08)] pb-safe"
+      >
+        <div className="grid grid-cols-5 h-16 px-1">
           <button
-            id="nav-tab-dashboard"
+            type="button"
             onClick={() => onSelectTab('dashboard')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap cursor-pointer ${
+            className={`relative flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1 transition-colors cursor-pointer ${
               activeTab === 'dashboard'
-                ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'text-amber-800 bg-amber-50/90 font-extrabold'
+                : 'text-slate-500 hover:text-slate-800 font-semibold'
             }`}
           >
-            <LayoutDashboard className="w-4 h-4 text-amber-600" />
-            <span>Genba Dashboard</span>
+            {activeTab === 'dashboard' && (
+              <span className="absolute top-0 left-3 right-3 h-0.5 bg-amber-600 rounded-full" />
+            )}
+            <LayoutDashboard className={`w-5 h-5 ${activeTab === 'dashboard' ? 'text-amber-600' : 'text-slate-400'}`} />
+            <span className="text-[10px] leading-none tracking-tight whitespace-nowrap">Dashboard</span>
           </button>
 
           <button
-            id="nav-tab-factory-dashboard"
+            type="button"
             onClick={() => onSelectTab('factory-dashboard')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap cursor-pointer ${
+            className={`relative flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1 transition-colors cursor-pointer ${
               activeTab === 'factory-dashboard'
-                ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'text-amber-800 bg-amber-50/90 font-extrabold'
+                : 'text-slate-500 hover:text-slate-800 font-semibold'
             }`}
           >
-            <Building2 className="w-4 h-4 text-amber-600" />
-            <span>Factory Dashboard</span>
+            {activeTab === 'factory-dashboard' && (
+              <span className="absolute top-0 left-3 right-3 h-0.5 bg-amber-600 rounded-full" />
+            )}
+            <Building2 className={`w-5 h-5 ${activeTab === 'factory-dashboard' ? 'text-amber-600' : 'text-slate-400'}`} />
+            <span className="text-[10px] leading-none tracking-tight whitespace-nowrap">Factory</span>
           </button>
 
           <button
-            id="nav-tab-checksheet"
+            type="button"
             onClick={() => onSelectTab('checksheet')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap cursor-pointer ${
+            className={`relative flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1 transition-colors cursor-pointer ${
               activeTab === 'checksheet'
-                ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'text-emerald-800 bg-emerald-50/90 font-extrabold'
+                : 'text-slate-500 hover:text-slate-800 font-semibold'
             }`}
           >
-            <CheckSquare className="w-4 h-4 text-emerald-600" />
-            <span>Checksheet</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-semibold font-mono">
-              5 Area
-            </span>
+            {activeTab === 'checksheet' && (
+              <span className="absolute top-0 left-3 right-3 h-0.5 bg-emerald-600 rounded-full" />
+            )}
+            <CheckSquare className={`w-5 h-5 ${activeTab === 'checksheet' ? 'text-emerald-600' : 'text-slate-400'}`} />
+            <span className="text-[10px] leading-none tracking-tight whitespace-nowrap">Checksheet</span>
           </button>
 
           <button
-            id="nav-tab-leadership-walkthrough"
+            type="button"
             onClick={() => onSelectTab('leadership-walkthrough')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap cursor-pointer ${
+            className={`relative flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1 transition-colors cursor-pointer ${
               activeTab === 'leadership-walkthrough'
-                ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'text-blue-800 bg-blue-50/90 font-extrabold'
+                : 'text-slate-500 hover:text-slate-800 font-semibold'
             }`}
           >
-            <ClipboardCheck className="w-4 h-4 text-blue-600" />
-            <span>Leadership Walkthrough & Inspection</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 font-mono">
-              {findings.length}
-            </span>
+            {activeTab === 'leadership-walkthrough' && (
+              <span className="absolute top-0 left-3 right-3 h-0.5 bg-blue-600 rounded-full" />
+            )}
+            <div className="relative">
+              <ClipboardCheck className={`w-5 h-5 ${activeTab === 'leadership-walkthrough' ? 'text-blue-600' : 'text-slate-400'}`} />
+              {findings.length > 0 && (
+                <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-slate-900 text-white text-[9px] font-mono font-bold flex items-center justify-center tabular-nums">
+                  {findings.length}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] leading-none tracking-tight whitespace-nowrap">Inspeksi</span>
           </button>
 
           <button
-            id="nav-tab-management-structure"
+            type="button"
             onClick={() => onSelectTab('management-structure')}
-            className={`flex items-center gap-2 px-3.5 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-colors whitespace-nowrap cursor-pointer ${
+            className={`relative flex flex-col items-center justify-center gap-1 rounded-xl mx-0.5 my-1 transition-colors cursor-pointer ${
               activeTab === 'management-structure'
-                ? 'bg-amber-50 text-amber-900 border-b-2 border-amber-600'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'text-purple-800 bg-purple-50/90 font-extrabold'
+                : 'text-slate-500 hover:text-slate-800 font-semibold'
             }`}
           >
-            <Network className="w-4 h-4 text-purple-600" />
-            <span>Management Structure</span>
+            {activeTab === 'management-structure' && (
+              <span className="absolute top-0 left-3 right-3 h-0.5 bg-purple-600 rounded-full" />
+            )}
+            <Network className={`w-5 h-5 ${activeTab === 'management-structure' ? 'text-purple-600' : 'text-slate-400'}`} />
+            <span className="text-[10px] leading-none tracking-tight whitespace-nowrap">Struktur</span>
           </button>
-
-        </nav>
-      </div>
-    </header>
+        </div>
+      </nav>
+    </>
   );
 };

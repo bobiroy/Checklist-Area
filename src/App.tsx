@@ -567,7 +567,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-24 md:pb-8">
         {activeTab === 'dashboard' && (
           <DashboardView
             findings={findings}
@@ -723,7 +723,7 @@ export default function App() {
       {toastMessage && (
         <div 
           id="app-toast-alert"
-          className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold animate-in slide-in-from-bottom-2 fade-in"
+          className="fixed bottom-20 md:bottom-5 left-3 right-3 sm:left-auto sm:right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold animate-in slide-in-from-bottom-2 fade-in"
         >
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>

@@ -152,67 +152,74 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [findings]);
 
   return (
-    <div className="space-y-8 pb-12 animate-in fade-in duration-300">
+    <div className="space-y-6 sm:space-y-8 pb-6 sm:pb-12 animate-in fade-in duration-300">
       {/* Hero Welcome & Quick Notice */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white rounded-2xl p-6 sm:p-8 shadow-xl border border-slate-700/60 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white rounded-2xl p-4 sm:p-8 shadow-xl border border-slate-700/60 relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-amber-500/10 to-transparent pointer-events-none"></div>
         <div className="relative z-10 max-w-3xl">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" />
-              Sistem Manajemen Continuous Improvement & Kaizen
+          <div className="flex items-center flex-wrap gap-2 mb-3">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] sm:text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-400/30 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">Sistem Manajemen Continuous Improvement &amp; Kaizen</span>
             </span>
             <span className="text-slate-400 text-xs hidden sm:inline">&bull; Terintegrasi Standar K3 & 5S</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
+          <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white mb-2 sm:mb-3 leading-snug">
             Genba Dashboard & Factory Improvement Hub
           </h1>
-          <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
+          <p className="text-slate-300 text-xs sm:text-base leading-relaxed mb-5 sm:mb-6">
             Pusat kendali inspeksi langsung lapangan (Genba Walk) manajemen pabrik. Pantau penyelesaian masalah, verifikasi bukti foto Before-After perbaikan, dan evaluasi kepatuhan standar setiap departemen secara real-time.
           </p>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 sm:gap-3">
             <button
               id="hero-new-walkthrough-btn"
               onClick={onOpenFindingModal}
-              className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto justify-center px-4 py-2.5 min-h-[44px] bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap"
             >
-              <Camera className="w-4 h-4" />
+              <Camera className="w-4 h-4 shrink-0" />
               <span>Input Hasil Walkthrough</span>
             </button>
-            <button
-              id="hero-view-checksheet-btn"
-              onClick={() => onNavigateTab('checksheet')}
-              className="px-4 py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 hover:text-white font-semibold rounded-xl text-xs sm:text-sm border border-emerald-500/40 transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <CheckSquare className="w-4 h-4 text-emerald-400" />
-              <span>Checksheet 5 Area (STOP-6)</span>
-            </button>
-            <button
-              id="hero-view-inspection-table-btn"
-              onClick={() => onNavigateTab('leadership-walkthrough')}
-              className="px-4 py-2.5 bg-slate-800/80 hover:bg-slate-700 text-white font-semibold rounded-xl text-xs sm:text-sm border border-slate-600 transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <span>Tabel Inspeksi ({total} Temuan)</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              id="hero-view-factory-dashboard-btn"
-              onClick={() => onNavigateTab('factory-dashboard')}
-              className="px-4 py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-white font-semibold rounded-xl text-xs sm:text-sm border border-amber-500/40 transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <Building2 className="w-4 h-4 text-amber-400" />
-              <span>Factory Dashboard (AOI &amp; DC)</span>
-            </button>
-            <button
-              id="hero-view-management-structure-btn"
-              onClick={() => onNavigateTab('management-structure')}
-              className="px-4 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 hover:text-white font-medium rounded-xl text-xs sm:text-sm border border-purple-500/40 transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <Layers className="w-4 h-4 text-purple-400" />
-              <span>Agenda &amp; Temuan BI Monthly</span>
-            </button>
+
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <button
+                id="hero-view-checksheet-btn"
+                onClick={() => onNavigateTab('checksheet')}
+                className="px-3 sm:px-4 py-2.5 min-h-[42px] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 hover:text-white font-semibold rounded-xl text-xs sm:text-sm border border-emerald-500/40 transition-all flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap min-w-0"
+              >
+                <CheckSquare className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="truncate sm:hidden">Checksheet 5 Area</span>
+                <span className="hidden sm:inline">Checksheet 5 Area (STOP-6)</span>
+              </button>
+              <button
+                id="hero-view-inspection-table-btn"
+                onClick={() => onNavigateTab('leadership-walkthrough')}
+                className="px-3 sm:px-4 py-2.5 min-h-[42px] bg-slate-800/80 hover:bg-slate-700 text-white font-semibold rounded-xl text-xs sm:text-sm border border-slate-600 transition-all flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap min-w-0"
+              >
+                <span className="truncate sm:hidden">Inspeksi ({total})</span>
+                <span className="hidden sm:inline">Tabel Inspeksi ({total} Temuan)</span>
+                <ArrowRight className="w-4 h-4 shrink-0" />
+              </button>
+              <button
+                id="hero-view-factory-dashboard-btn"
+                onClick={() => onNavigateTab('factory-dashboard')}
+                className="px-3 sm:px-4 py-2.5 min-h-[42px] bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-white font-semibold rounded-xl text-xs sm:text-sm border border-amber-500/40 transition-all flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap min-w-0"
+              >
+                <Building2 className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="truncate sm:hidden">Factory AOI/DC</span>
+                <span className="hidden sm:inline">Factory Dashboard (AOI &amp; DC)</span>
+              </button>
+              <button
+                id="hero-view-management-structure-btn"
+                onClick={() => onNavigateTab('management-structure')}
+                className="px-3 sm:px-4 py-2.5 min-h-[42px] bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 hover:text-white font-medium rounded-xl text-xs sm:text-sm border border-purple-500/40 transition-all flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap min-w-0"
+              >
+                <Layers className="w-4 h-4 text-purple-400 shrink-0" />
+                <span className="truncate sm:hidden">Agenda BI Monthly</span>
+                <span className="hidden sm:inline">Agenda &amp; Temuan BI Monthly</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -234,12 +241,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
           {/* Card 1: Total Findings */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all">
+          <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-slate-300 transition-all">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Temuan</span>
-              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Temuan</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
                 <Layers className="w-4 h-4" />
               </div>
             </div>
@@ -248,10 +255,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Card 2: Open Findings */}
-          <div className="bg-white p-5 rounded-2xl border border-rose-200/80 shadow-xs bg-rose-50/20 hover:border-rose-300 transition-all">
+          <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-rose-200/80 shadow-xs bg-rose-50/20 hover:border-rose-300 transition-all">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider">Status Open</span>
-              <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600">
+              <span className="text-[11px] sm:text-xs font-semibold text-rose-700 uppercase tracking-wider">Status Open</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 shrink-0">
                 <AlertTriangle className="w-4 h-4" />
               </div>
             </div>
@@ -260,10 +267,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Card 3: In Progress */}
-          <div className="bg-white p-5 rounded-2xl border border-amber-200/80 shadow-xs bg-amber-50/20 hover:border-amber-300 transition-all">
+          <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-amber-200/80 shadow-xs bg-amber-50/20 hover:border-amber-300 transition-all">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">In Progress</span>
-              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
+              <span className="text-[11px] sm:text-xs font-semibold text-amber-700 uppercase tracking-wider">In Progress</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
                 <Clock className="w-4 h-4" />
               </div>
             </div>
@@ -272,10 +279,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Card 4: Closed */}
-          <div className="bg-white p-5 rounded-2xl border border-emerald-200/80 shadow-xs bg-emerald-50/20 hover:border-emerald-300 transition-all">
+          <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-emerald-200/80 shadow-xs bg-emerald-50/20 hover:border-emerald-300 transition-all">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Closed & Verified</span>
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+              <span className="text-[11px] sm:text-xs font-semibold text-emerald-700 uppercase tracking-wider">Closed & Verified</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
             </div>
@@ -284,10 +291,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Card 5: Closure Rate % */}
-          <div className="col-span-2 sm:col-span-1 bg-white p-5 rounded-2xl border border-blue-200/80 shadow-xs bg-blue-50/20 hover:border-blue-300 transition-all">
+          <div className="col-span-2 sm:col-span-1 bg-white p-3.5 sm:p-5 rounded-2xl border border-blue-200/80 shadow-xs bg-blue-50/20 hover:border-blue-300 transition-all">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Closure Rate</span>
-              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+              <span className="text-[11px] sm:text-xs font-semibold text-blue-700 uppercase tracking-wider">Closure Rate</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
@@ -320,9 +327,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Grid: Distribusi Kategori & Prioritas Mendesak */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Distribusi Kategori Temuan */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between gap-2 mb-4">
               <div>
                 <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                   Komposisi 5 Kategori Temuan
@@ -331,7 +338,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   Distribusi fokus perbaikan terstandardisasi pabrik
                 </p>
               </div>
-              <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+              <span className="text-[11px] sm:text-xs font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 whitespace-nowrap shrink-0">
                 5 Kategori Standar
               </span>
             </div>
@@ -409,10 +416,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Urgent Items Alert Box */}
-          <div className="p-4 rounded-xl border border-rose-200 bg-rose-50/40">
-            <div className="flex items-center justify-between mb-2">
+          <div className="p-3.5 sm:p-4 rounded-xl border border-rose-200 bg-rose-50/40">
+            <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
               <span className="text-xs font-bold text-rose-800 flex items-center gap-1.5">
-                <ShieldAlert className="w-4 h-4 text-rose-600" />
+                <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
                 Perhatian Khusus Manajemen ({criticalCount} Isu Kritis)
               </span>
               <span className="text-[11px] text-rose-600 font-semibold">Prioritas Tindakan</span>
@@ -434,11 +441,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       <span className="font-black text-amber-950 bg-amber-100 border border-amber-300 px-1 py-0.2 rounded text-[9px] uppercase tracking-wider shrink-0">
                         {item.factory || 'AOI 1'}
                       </span>
-                      <span>{item.area} &bull; PIC: {item.pic}</span>
+                      <span className="truncate">{item.area} &bull; PIC: {item.pic}</span>
                     </p>
-                    <p className="text-[10px] text-amber-900 font-semibold flex items-center gap-1 mt-1">
+                    <p className="text-[10px] text-amber-900 font-semibold flex items-center gap-1 mt-1 truncate">
                       <UserCheck className="w-3 h-3 text-amber-600 shrink-0" />
-                      <span>Ditemukan Assessor: <strong className="text-slate-900">{item.inspectorName || item.recordedBy || 'Assessor Genba'}</strong></span>
+                      <span className="truncate">Assessor: <strong className="text-slate-900">{item.inspectorName || item.recordedBy || 'Assessor Genba'}</strong></span>
                     </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -448,7 +455,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     {onEditFinding && (
                       <button
                         onClick={() => onEditFinding(item)}
-                        className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg transition-colors cursor-pointer border border-amber-200"
+                        className="p-2 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-lg transition-colors cursor-pointer border border-amber-200 min-w-[36px] min-h-[36px] flex items-center justify-center"
                         title="Edit dan update progress perbaikan"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -463,11 +470,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* SEKSI: LOG TEMUAN LAPANGAN & PROFIL ASSESSOR PENEMU */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-7 shadow-xs space-y-5">
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-7 shadow-xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-amber-500/15 text-amber-800 border border-amber-300/40">
+              <span className="p-1.5 rounded-lg bg-amber-500/15 text-amber-800 border border-amber-300/40 shrink-0">
                 <UserCheck className="w-5 h-5 text-amber-700" />
               </span>
               <h3 className="text-base font-extrabold text-slate-900">
@@ -481,10 +488,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           <button
             onClick={() => onNavigateTab('leadership-walkthrough')}
-            className="px-3.5 py-1.5 bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+            className="w-full sm:w-auto justify-center px-3.5 py-2.5 sm:py-1.5 min-h-[40px] bg-slate-50 hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-slate-200 hover:border-amber-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
             <span>Buka Tabel Semua Temuan ({total})</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5 shrink-0" />
           </button>
         </div>
 

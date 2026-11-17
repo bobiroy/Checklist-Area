@@ -303,16 +303,16 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
   }, [areaMetrics]);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-7 shadow-xs space-y-6">
+    <div className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-7 shadow-xs space-y-5 sm:space-y-6">
       {/* Header Bar: Title & Factory Selector */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center flex-wrap gap-2">
             <h3 className="text-base sm:text-lg font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-amber-600" />
+              <Building2 className="w-5 h-5 text-amber-600 shrink-0" />
               <span>Pemantauan Temuan Tiap Area per Factory</span>
             </h3>
-            <span className="text-[10px] font-extrabold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full border border-amber-300">
+            <span className="text-[10px] font-extrabold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full border border-amber-300 whitespace-nowrap">
               Live Monitoring
             </span>
           </div>
@@ -322,12 +322,12 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
         </div>
 
         {/* Factory Selector Pills & View Mode Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 sm:gap-3 w-full lg:w-auto">
           {/* Factory Tabs */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto">
             <button
               onClick={() => setSelectedFactory('ALL')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`col-span-2 sm:col-span-1 px-3 py-2 sm:py-1.5 min-h-[38px] rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center justify-center ${
                 selectedFactory === 'ALL'
                   ? 'bg-amber-600 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
@@ -341,14 +341,14 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
                 <button
                   key={fac}
                   onClick={() => setSelectedFactory(fac)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-2.5 sm:px-3 py-2 sm:py-1.5 min-h-[38px] rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap ${
                     selectedFactory === fac
                       ? 'bg-amber-600 text-white shadow-xs'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   <span>{fac}</span>
-                  <span className={`text-[10px] font-mono px-1 py-0.2 rounded-full ${
+                  <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
                     selectedFactory === fac ? 'bg-amber-700 text-white' : 'bg-slate-200 text-slate-700'
                   }`}>
                     {facCount}
@@ -359,10 +359,10 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
           </div>
 
           {/* Toggle View: Cards vs Chart vs Table */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <div className="flex items-center self-end sm:self-auto bg-slate-100 p-1 rounded-xl border border-slate-200 gap-1">
             <button
               onClick={() => setViewMode('cards')}
-              className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`p-2 sm:p-1.5 min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === 'cards' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Tampilan Kartu Area"
@@ -371,7 +371,7 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
             </button>
             <button
               onClick={() => setViewMode('chart')}
-              className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`p-2 sm:p-1.5 min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === 'chart' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Grafik Batang Performa"
@@ -380,7 +380,7 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`p-2 sm:p-1.5 min-w-[38px] min-h-[38px] sm:min-w-0 sm:min-h-0 flex items-center justify-center rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === 'table' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-900'
               }`}
               title="Tabel Matriks Lengkap"
@@ -392,19 +392,19 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
       </div>
 
       {/* Quick Scope Performance Bar */}
-      <div className="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2">
+      <div className="bg-slate-50 rounded-xl p-3 sm:p-3.5 border border-slate-200/80 flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-2.5 sm:gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="font-bold text-slate-700">Filter Aktif:</span>
           <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-extrabold border border-amber-300">
             {selectedFactory === 'ALL' ? 'Seluruh Fasilitas (AOI & DC)' : `Unit Pabrik ${selectedFactory}`}
           </span>
-          <span className="text-slate-300">|</span>
+          <span className="text-slate-300 hidden sm:inline">|</span>
           <span className="text-slate-500">
             Total Terdata: <strong className="text-slate-900">{totalFindingsInScope} Temuan</strong>
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <span className="flex items-center gap-1 font-semibold text-rose-700">
             <span className="w-2 h-2 rounded-full bg-rose-500"></span>
             {totalOpen} Open
@@ -417,7 +417,7 @@ export const AreaPerformanceDashboard: React.FC<AreaPerformanceDashboardProps> =
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             {totalClosed} Closed
           </span>
-          <span className="text-slate-300">|</span>
+          <span className="text-slate-300 hidden sm:inline">|</span>
           <span className="font-bold text-blue-700">
             Rata-rata Selesai: {overallRate}%
           </span>

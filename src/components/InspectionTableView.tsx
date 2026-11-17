@@ -115,25 +115,25 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 pb-12 animate-in fade-in duration-300">
+    <div className="space-y-5 sm:space-y-6 pb-6 sm:pb-12 animate-in fade-in duration-300">
       {/* Page Header */}
-      <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-              Audit & Action Items Registry
+          <div className="flex items-center flex-wrap gap-2 mb-1">
+            <span className="text-[11px] sm:text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+              Audit &amp; Action Items Registry
             </span>
             <span className="text-xs text-slate-500">Standar 9 Kolom Utama Sesuai Format Inspeksi</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            Leadership Walkthrough & Inspection
+          <h1 className="text-lg sm:text-2xl font-black text-slate-900 tracking-tight">
+            Leadership Walkthrough &amp; Inspection
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
             Genba System for All Production area using 6S and STOP 6 in Apparel One Indonesia for continuous Improvement
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-2.5 w-full md:w-auto">
           {/* User Role Authority Badge (Static) */}
           {currentUser && (
             <div
@@ -160,16 +160,16 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
           <button
             id="table-add-new-btn"
             onClick={onOpenNewFindingModal}
-            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            className="w-full sm:w-auto justify-center px-4 py-2.5 sm:py-2 min-h-[42px] bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer whitespace-nowrap"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 shrink-0" />
             <span>Tambah Temuan Baru</span>
           </button>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="no-print bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+      <div className="no-print bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
         <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
           {/* Search Input */}
           <div className="relative w-full md:max-w-md">
@@ -179,17 +179,17 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
               placeholder="Cari kata kunci, ID temuan, area, PIC, deskripsi..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-slate-50/50"
+              className="w-full pl-9 pr-4 py-2.5 sm:py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-slate-50/50"
             />
           </div>
 
           {/* Quick status summary info */}
-          <div className="text-xs text-slate-500 flex items-center gap-2 self-start md:self-auto">
+          <div className="text-xs text-slate-500 flex flex-wrap items-center gap-2 self-start md:self-auto">
             <span>Menampilkan <strong>{filteredFindings.length}</strong> dari <strong>{findings.length}</strong> total temuan</span>
             {(searchQuery || selectedFactory !== 'ALL' || selectedArea !== 'ALL' || selectedCategory !== 'ALL' || selectedStatus !== 'ALL' || selectedDept !== 'ALL') && (
               <button
                 onClick={resetFilters}
-                className="text-amber-700 hover:text-amber-800 font-bold flex items-center gap-1 ml-2 text-xs"
+                className="text-amber-700 hover:text-amber-800 font-bold flex items-center gap-1 ml-1 text-xs cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" />
                 Reset Filter
@@ -199,14 +199,14 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
         </div>
 
         {/* Filters Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-3 border-t border-slate-100 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3 pt-3 border-t border-slate-100 text-xs">
           {/* Filter 1: Factory */}
           <div>
             <label className="block font-bold text-slate-600 mb-1">Filter Factory</label>
             <select
               value={selectedFactory}
               onChange={(e) => setSelectedFactory(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-xs font-semibold"
+              className="w-full px-2.5 py-2 sm:py-1.5 min-h-[40px] sm:min-h-0 border border-slate-300 rounded-lg bg-white text-xs font-semibold"
             >
               <option value="ALL">Semua Factory</option>
               <option value="AOI 1">AOI 1</option>
@@ -222,7 +222,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
             <select
               value={selectedArea}
               onChange={(e) => setSelectedArea(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-xs"
+              className="w-full px-2.5 py-2 sm:py-1.5 min-h-[40px] sm:min-h-0 border border-slate-300 rounded-lg bg-white text-xs"
             >
               <option value="ALL">Semua Area ({findings.length})</option>
               {FACTORY_AREAS.map((a) => (
@@ -237,7 +237,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-xs"
+              className="w-full px-2.5 py-2 sm:py-1.5 min-h-[40px] sm:min-h-0 border border-slate-300 rounded-lg bg-white text-xs"
             >
               <option value="ALL">Semua Kategori</option>
               {FINDING_CATEGORIES.map((cat) => (
@@ -252,7 +252,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-xs font-semibold"
+              className="w-full px-2.5 py-2 sm:py-1.5 min-h-[40px] sm:min-h-0 border border-slate-300 rounded-lg bg-white text-xs font-semibold"
             >
               <option value="ALL">Semua Status</option>
               <option value="Open">🔴 Open</option>
@@ -268,7 +268,7 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white text-xs"
+              className="w-full px-2.5 py-2 sm:py-1.5 min-h-[40px] sm:min-h-0 border border-slate-300 rounded-lg bg-white text-xs"
             >
               <option value="ALL">Semua Departemen</option>
               {DEPARTMENTS.map((d) => (
@@ -315,9 +315,181 @@ export const InspectionTableView: React.FC<InspectionTableViewProps> = ({
         </div>
       )}
 
-      {/* Main Improvement Table: Columns 1 to 10 */}
+      {/* Main Improvement Table: Mobile Cards (< md) + Desktop Table (>= md) */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Cards View (< md) */}
+        <div className="md:hidden divide-y divide-slate-200">
+          {filteredFindings.length === 0 ? (
+            <div className="py-12 px-4 text-center text-slate-400">
+              <div className="max-w-xs mx-auto text-center space-y-2">
+                <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto" />
+                <p className="font-bold text-slate-700 text-sm">Tidak ada temuan yang sesuai</p>
+                <p className="text-xs text-slate-500">Coba ubah kata kunci atau bersihkan filter pencarian Anda.</p>
+                <button
+                  onClick={resetFilters}
+                  className="mt-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-bold text-slate-700 cursor-pointer"
+                >
+                  Reset Filter
+                </button>
+              </div>
+            </div>
+          ) : (
+            filteredFindings.map((item, index) => (
+              <div
+                key={`mobile-${item.id}`}
+                className={`p-4 space-y-3 transition-colors ${
+                  selectedIds.includes(item.id) ? 'bg-rose-50/50' : 'bg-white'
+                }`}
+              >
+                {/* Top Meta Row */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(item.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(prev => [...prev, item.id]);
+                        } else {
+                          setSelectedIds(prev => prev.filter(id => id !== item.id));
+                        }
+                      }}
+                      title={`Pilih temuan ${item.id}`}
+                      className="w-5 h-5 rounded text-amber-600 focus:ring-amber-500 border-slate-300 cursor-pointer accent-amber-600 shrink-0"
+                    />
+                    <span className="font-mono text-[11px] font-bold text-slate-500">#{index + 1}</span>
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-950 border border-amber-300 uppercase shrink-0">
+                      {item.factory || 'AOI 1'}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono truncate">{item.id}</span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-medium shrink-0 flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-slate-400" />
+                    {item.date}
+                  </span>
+                </div>
+
+                {/* Main Content: Photo + Finding + Area */}
+                <div className="flex items-start gap-3">
+                  <div
+                    onClick={() => onSelectPhotoProof(item)}
+                    className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-slate-200 bg-slate-900 cursor-pointer shadow-2xs"
+                  >
+                    <img
+                      src={item.attachmentUrl}
+                      alt="Bukti temuan"
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                    <span className="absolute bottom-0 right-0 bg-rose-600 text-white text-[8px] font-bold px-1 rounded-tl">
+                      BEFORE
+                    </span>
+                  </div>
+
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-amber-600 shrink-0" />
+                        <span className="truncate">{item.area}</span>
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                        {item.category}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-800 leading-snug line-clamp-2">
+                      {item.finding}
+                    </p>
+                    {item.priority === 'Critical' && (
+                      <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-100 text-rose-800">
+                        ⚠️ Kritis / Bahaya
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Assessor, PIC & Corrective Action */}
+                <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-[11px]">
+                  <div className="min-w-0">
+                    <span className="text-[10px] text-slate-400 block">Assessor:</span>
+                    <span className="font-bold text-slate-800 truncate block">{item.recordedBy || 'Assessor Genba'}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] text-slate-400 block">PIC Area:</span>
+                    <span className="font-bold text-slate-800 truncate block">{item.pic}</span>
+                  </div>
+                  {item.correctiveAction && (
+                    <div className="col-span-2 pt-1 border-t border-slate-200/70">
+                      <span className="text-[10px] text-slate-500">Tindakan: </span>
+                      <span className="text-[11px] font-medium text-slate-800">{item.correctiveAction}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Status Select (full width) */}
+                <div>
+                  <select
+                    value={item.status}
+                    onChange={(e) => {
+                      const newStatus = e.target.value as FindingStatus;
+                      if (newStatus === 'Closed' && currentUser && currentUser.role !== 'admin') {
+                        onOpenLoginModal?.('Hanya Admin yang memiliki otorisasi untuk menutup temuan (Closed). Silakan login sebagai Admin.');
+                        return;
+                      }
+                      onQuickUpdateStatus(item.id, newStatus);
+                    }}
+                    className={`w-full min-h-[42px] text-xs font-bold px-3 py-2 rounded-xl border transition-colors cursor-pointer ${
+                      item.status === 'Closed'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                        : item.status === 'In Progress'
+                        ? 'bg-amber-50 text-amber-700 border-amber-300'
+                        : item.status === 'Pending Verification'
+                        ? 'bg-blue-50 text-blue-700 border-blue-300'
+                        : 'bg-rose-50 text-rose-700 border-rose-300'
+                    }`}
+                  >
+                    <option value="Open">🔴 Open</option>
+                    <option value="In Progress">🟡 In Progress</option>
+                    <option value="Pending Verification">🔵 Pending Verification</option>
+                    <option value="Closed" disabled={currentUser?.role !== 'admin'}>
+                      🟢 Closed {currentUser?.role !== 'admin' ? '(🔒 Khusus Admin)' : ''}
+                    </option>
+                  </select>
+                </div>
+
+                {/* Mobile Action Row */}
+                <div className="no-print grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onSelectPhotoProof(item)}
+                    className="min-h-[42px] px-2 py-2 rounded-xl text-xs font-bold border bg-slate-50 hover:bg-amber-50 text-slate-700 border-slate-200 flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>{item.attachmentAfterUrl ? 'Before/After' : 'Foto'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onEditFinding(item)}
+                    className="min-h-[42px] px-2 py-2 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 shrink-0" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFindingToDelete(item)}
+                    className="min-h-[42px] px-2 py-2 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                    <span>Hapus</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop Table View (>= md) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-600 border-collapse">
             {/* Table Header: Sequentially numbered columns 1 to 10 */}
             <thead className="bg-slate-900 text-slate-200 uppercase text-[11px] font-bold tracking-wider select-none">
